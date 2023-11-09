@@ -2,17 +2,16 @@ use std::path::Path;
 use rusqlite::{Connection, OpenFlags, named_params};
 
 
-const INVENTORY_TABLE: &str = "inventory";
-const INVENTORY_DDSQL: String = format!(
+const GAMES_TABLE: &str = "games";
+const GAMES_DDSQL: String = format!(
         "CREATE TABLE IF NOT EXISTS {table} (
             id       INTEGER PRIMARY KEY,
             name     TEXT,
             ipv4     INTEGER,
             hostname TEXT,
             notes    TEXT
-        )", table=INVENTORY_TABLE);
-const GET_BY_ID_QSQL: String = format!("SELECT * FROM {t} where id = :id order by id asc", t=INVENTORY_TABLE);
-const GET_BY_
+        )", table=GAMES_TABLE);
+const GET_BY_ID_QSQL: String = format!("SELECT * FROM {t} where id = :id order by id asc", t=GAMES_TABLE);
 
 pub struct Db {
     conn: Connection

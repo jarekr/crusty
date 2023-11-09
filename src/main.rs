@@ -17,5 +17,5 @@ fn main() {
     let dbpath = Path::new("data.db");
     let db = Db::new(dbpath);
 
-    println!("This is where I")
+    println!("This is where I am")
 }
