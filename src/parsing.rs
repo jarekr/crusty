@@ -44,6 +44,10 @@ pub enum Side {
     Black
 }
 
+pub struct Square {
+    pub 
+}
+
 #[bitsize(4)]
 #[derive(DebugBits, PartialEq, FromBits, Default, Clone)]
 pub struct PieceInPlay {
@@ -51,10 +55,10 @@ pub struct PieceInPlay {
     pub side: Side,
 }
 
-#[bitsize(128)]
-#[derive(DebugBits, Default)]
+#[derive(Debug, Default)]
 pub struct Position{
-    pub board: [PieceInPlay; 64]
+    pub board_black: [PieceInPlay; 32],
+    pub board_white: [PieceInPlay; 32]
 }
 
 impl Position {
@@ -103,7 +107,11 @@ impl Position {
                 };
                 let mut count = 0;
                 for piece in pieces.iter() {
-                    pos.board()[count] = *piece;
+                    if count < 16 {
+                        pos.board_black[count] = *piece;
+                    } else {
+                        pos.board_white[count] = *piece;
+                    }
                     count += 1;
                 }
             }
@@ -127,19 +135,19 @@ const BLACK_QUEEN_C: char  = 'q';
 const BLACK_KING_C: char   = 'k';
 const BLACK_PAWN_C: char   = 'p';
 
-const WHITE_ROOK: PieceInPlay   = PieceInPlay { value: 0b0000_0000_0000_0001 };
-const WHITE_KNIGHT: PieceInPlay = PieceInPlay::new(Piece::Knight, Side::White);
-const WHITE_BISHOP: PieceInPlay = PieceInPlay::new(Piece::Bishop, Side::White);
-const WHITE_QUEEN: PieceInPlay  = PieceInPlay::new(Piece::Queen, Side::White);
-const WHITE_KING: PieceInPlay   = PieceInPlay::new(Piece::King, Side::White);
-const WHITE_PAWN: PieceInPlay   = PieceInPlay::new(Piece::Pawn, Side::White);
-const BLACK_ROOK: PieceInPlay   = PieceInPlay::new(Piece::Rook, Side::Black);
-const BLACK_KNIGHT: PieceInPlay = PieceInPlay::new(Piece::Knight, Side::Black);
-const BLACK_BISHOP: PieceInPlay = PieceInPlay::new(Piece::Bishop, Side::Black);
-const BLACK_QUEEN: PieceInPlay  = PieceInPlay::new(Piece::Queen, Side::Black);
-const BLACK_KING: PieceInPlay   = PieceInPlay::new(Piece::King, Side::Black);
-const BLACK_PAWN: PieceInPlay   = PieceInPlay::new(Piece::Pawn, Side::Black);
-const EMPTY: PieceInPlay = PieceInPlay::new(Piece::Empty, Side::Black);
+static WHITE_ROOK: PieceInPlay   = PieceInPlay::new(Piece::Rook, Side::White);
+static WHITE_KNIGHT: PieceInPlay = PieceInPlay::new(Piece::Knight, Side::White);
+static WHITE_BISHOP: PieceInPlay = PieceInPlay::new(Piece::Bishop, Side::White);
+static WHITE_QUEEN: PieceInPlay  = PieceInPlay::new(Piece::Queen, Side::White);
+static WHITE_KING: PieceInPlay   = PieceInPlay::new(Piece::King, Side::White);
+static WHITE_PAWN: PieceInPlay   = PieceInPlay::new(Piece::Pawn, Side::White);
+static BLACK_ROOK: PieceInPlay   = PieceInPlay::new(Piece::Rook, Side::Black);
+static BLACK_KNIGHT: PieceInPlay = PieceInPlay::new(Piece::Knight, Side::Black);
+static BLACK_BISHOP: PieceInPlay = PieceInPlay::new(Piece::Bishop, Side::Black);
+static BLACK_QUEEN: PieceInPlay  = PieceInPlay::new(Piece::Queen, Side::Black);
+static BLACK_KING: PieceInPlay   = PieceInPlay::new(Piece::King, Side::Black);
+static BLACK_PAWN: PieceInPlay   = PieceInPlay::new(Piece::Pawn, Side::Black);
+static EMPTY: PieceInPlay = PieceInPlay::new(Piece::Empty, Side::Black);
 
 // 4 bits = 16 == 12 pieces + 2
 // 4 * 8slots == 32 bits per row
@@ -156,28 +164,3 @@ const EMPTY: PieceInPlay = PieceInPlay::new(Piece::Empty, Side::Black);
 //
 // 6 + 4 = 10 bits * 32 = 320 bits or less
 //
-pub struct InventoryItem {
-    pub id: u32,
-    pub name: String,
-    pub ipv4: u32,
-    pub hostname: String,
-    pub notes: String,
-}
-
-impl InventoryItem {
-    pub fn queryById(db: Db, id: u32) -> Option<InventoryItem> {
-        let mut stmt = db.conn
-            .prepare("SELECT * from inventory where id = :id order by id asc").expect("perpare failed");
-        let mut result = stmt.query(named_params!{":id": id}).expect("query failed");
-        match result.next().expect("next failed on select result") {
-            Some(row) => Some(InventoryItem {
-                   id: row.get(0).unwrap(),
-                   ipv4: row.get(1).unwrap(),
-                   name: row.get(2).unwrap(),
-                   hostname: row.get(3).unwrap(),
-                   notes: row.get(4).unwrap(),
-            }),
-            None => None
-        }
-    }
-}
