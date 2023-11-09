@@ -1,17 +1,16 @@
 use std::path::Path;
 use rusqlite::{Connection, OpenFlags, named_params};
+use const_format::concatcp;
 
 
 const GAMES_TABLE: &str = "games";
-const GAMES_DDSQL: String = format!(
-        "CREATE TABLE IF NOT EXISTS {table} (
+const GAMES_DDSQL: &str = concatcp!("CREATE TABLE IF NOT EXISTS ", GAMES_TABLE, " (
             id       INTEGER PRIMARY KEY,
-            name     TEXT,
-            ipv4     INTEGER,
-            hostname TEXT,
+            pgn      TEXT,
             notes    TEXT
-        )", table=GAMES_TABLE);
-const GET_BY_ID_QSQL: String = format!("SELECT * FROM {t} where id = :id order by id asc", t=GAMES_TABLE);
+        )");
+const GET_BY_ID_GAMES_QSQL: &str = concatcp!("SELECT * FROM ", GAMES_TABLE, " where id = :id order by id asc");
+const INSERT_INTO_GAMES_QSQL: &str = concatcp!("INSERT INTO ", GAMES_TABLE, " (id, pgn, notes) VALUES (:id, :pgn, :notes)");
 
 pub struct Db {
     conn: Connection
@@ -19,12 +18,18 @@ pub struct Db {
 
 impl Db {
 
-    pub fn new(dbpath: &Path) -> Connection {
+    pub fn new(dbpath: &Path) -> Db {
         match Connection::open_with_flags(dbpath,
         OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_CREATE | OpenFlags::SQLITE_OPEN_URI | OpenFlags::SQLITE_OPEN_NO_MUTEX) {
-            Ok(conn) => conn,
+            Ok(conn) => Db { conn },
             Err(why) => panic!("{}", why)
 
+        }
+    }
+
+    pub fn init_schema(&self) -> () {
+        for sql in [GAMES_DDSQL] {
+            self.create_schema(sql);
         }
     }
 
@@ -36,27 +41,23 @@ impl Db {
     }
 }
 
-pub struct InventoryRow {
+pub struct Game {
     pub id: u32,
-    pub name: String,
-    pub ipv4: u32,
-    pub hostname: String,
+    pub pgn: String,
     pub notes: String,
 }
 
-impl InventoryRow {
-    pub fn query_by_id(db: Db, id: u32) -> Option<InventoryRow> {
-        let mut stmt = db.conn.prepare("SELECT * from inventory where id = :id order by id asc").expect("")
+impl Game {
+    pub fn query_by_id(db: Db, id: u32) -> Option<Game> {
+        let mut stmt = db.conn.prepare(GET_BY_ID_GAMES_QSQL).expect("prepare failed");
         let mut row_iter = stmt.query(named_params!{":id": id.to_string()}).unwrap();
 
         match row_iter.next().expect("next failed") {
             Some(row ) => {
-                Some(InventoryRow {
+                Some(Game {
                     id: row.get(0).unwrap(),
-                    name: row.get(1).unwrap(),
-                    ipv4: row.get(2).unwrap(),
-                    hostname: row.get(3).unwrap(),
-                    notes: row.get(4).unwrap(),
+                    pgn: row.get(1).unwrap(),
+                    notes: row.get(3).unwrap(),
 
                 })
             }

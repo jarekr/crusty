@@ -16,6 +16,7 @@ fn main() {
     println!("called with config_path: {}", args.config_path.display().to_string().green());
     let dbpath = Path::new("data.db");
     let db = Db::new(dbpath);
+    db.init_schema();
 
     println!("This is where I am")
 }
