@@ -7,7 +7,6 @@ pub struct RustyConfig {
     pub data_dir: PathBuf,
     pub config_dir: PathBuf,
 }
-use std::{path::Path, iter};
 
 use bilge::prelude::*;
 
@@ -44,10 +43,6 @@ pub enum Side {
     Black
 }
 
-pub struct Square {
-    pub 
-}
-
 #[bitsize(4)]
 #[derive(DebugBits, PartialEq, FromBits, Default, Clone)]
 pub struct PieceInPlay {
@@ -55,14 +50,20 @@ pub struct PieceInPlay {
     pub side: Side,
 }
 
-#[derive(Debug, Default)]
+impl PieceInPlay {
+    pub fn news(p: Piece, s: Side) -> PieceInPlay {
+        PieceInPlay { value: p}
+    }
+}
+
+#[derive(Debug)]
 pub struct Position{
-    pub board_black: [PieceInPlay; 32],
-    pub board_white: [PieceInPlay; 32]
+    pub board: [PieceInPlay; 64]
 }
 
 impl Position {
     pub fn parse_from_str(fen: &str) -> Result<Position, &str> {
+
         let parts: Vec<_> = fen.split(' ').collect();
         if parts.len() != 6 {
             return Err("not enough parts");
@@ -72,48 +73,50 @@ impl Position {
             return Err("not enough rows")
         }
 
-        let mut pos: Position = Position::default();
+        let mut pos: Position = Position { board:
+            [
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+            ]
+        };
 
         for (rank, pieces) in position_parts.iter().rev().enumerate() {
+            let mut idx = 0;
             for pc in pieces.chars() {
-                let pieces: &[PieceInPlay] = match pc {
-                    WHITE_PAWN_C => &[WHITE_PAWN][..1],
-                    WHITE_KNIGHT_C => &[WHITE_KNIGHT][..1],
-                    WHITE_BISHOP_C => &[WHITE_BISHOP][..1],
-                    WHITE_QUEEN_C => &[WHITE_QUEEN][..1],
-                    WHITE_KING_C => &[WHITE_KING][..1],
-                    WHITE_ROOK_C => &[WHITE_ROOK][..1],
-                    BLACK_PAWN_C => &[BLACK_PAWN][..1],
-                    BLACK_KNIGHT_C => &[BLACK_KNIGHT][..1],
-                    BLACK_BISHOP_C => &[BLACK_BISHOP][..1],
-                    BLACK_QUEEN_C => &[BLACK_QUEEN][..1],
-                    BLACK_KING_C => &[BLACK_KING][..1],
-                    BLACK_ROOK_C => &[BLACK_ROOK][..1],
-                    pc if pc.is_ascii_digit() => {
-                        let digit = pc.to_digit(10).unwrap();
-                        match digit {
-                            1 => &[EMPTY][..1],
-                            2 => &[EMPTY, EMPTY][..2],
-                            3 => &[EMPTY, EMPTY, EMPTY][..3],
-                            4 => &[EMPTY, EMPTY, EMPTY, EMPTY][..4],
-                            5 => &[EMPTY, EMPTY, EMPTY, EMPTY, EMPTY][..5],
-                            6 => &[EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY][..6],
-                            7 => &[EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY][..7],
-                            8 => &[EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY][..8],
-                            _ => panic!("invalid digit in fen")
-                        }
-                    },
-                    other => panic!("error, invalid char in fen: {}", other),
-                };
-                let mut count = 0;
-                for piece in pieces.iter() {
-                    if count < 16 {
-                        pos.board_black[count] = *piece;
-                    } else {
-                        pos.board_white[count] = *piece;
+                if pc.is_ascii_digit() {
+                    let digit = pc.to_digit(10).unwrap();
+                    if digit < 1 || digit > 8 {
+                        panic!("invalid digit in fen")
                     }
-                    count += 1;
+                    for _ in 0..digit {
+                        idx  += 1;
+                    }
+
+                } else {
+                    pos.board[idx * rank] = match pc {
+                        WHITE_PAWN_C => WHITE_PAWN,
+                        WHITE_KNIGHT_C => WHITE_KNIGHT,
+                        WHITE_BISHOP_C => WHITE_BISHOP,
+                        WHITE_QUEEN_C => WHITE_QUEEN,
+                        WHITE_KING_C => WHITE_KING,
+                        WHITE_ROOK_C => WHITE_ROOK,
+                        BLACK_PAWN_C => BLACK_PAWN,
+                        BLACK_KNIGHT_C => BLACK_KNIGHT,
+                        BLACK_BISHOP_C => BLACK_BISHOP,
+                        BLACK_QUEEN_C => BLACK_QUEEN,
+                        BLACK_KING_C => BLACK_KING,
+                        BLACK_ROOK_C => BLACK_ROOK,
+                        other => panic!("error, invalid char in fen: {}", other),
+                    };
+                    idx += 1;
                 }
+
             }
         }
         Ok(pos)
