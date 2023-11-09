@@ -202,6 +202,7 @@ dependencies = [
  "clap",
  "colored",
  "const_format",
+ "once_cell",
  "rusqlite",
  "serde",
  "serde_json",
