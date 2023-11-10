@@ -195,8 +195,6 @@ impl Position {
             ]
         };
 
-        let foo = WHITE_BISHOP.value.value();
-
         for (idx, pn) in Position::from_bits2(r12).iter().enumerate() {
             pos.board[idx] = VAL_TO_PIECE.get(pn).unwrap();
         }
