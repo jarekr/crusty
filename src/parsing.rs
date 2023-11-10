@@ -56,6 +56,22 @@ impl PieceInPlay {
     pub fn news(p: Piece, s: Side) -> PieceInPlay {
         PieceInPlay::new(p, s)
     }
+
+    pub fn to_char(&self) -> char {
+        let mut c = match self.piece() {
+            Piece::Pawn => WHITE_PAWN_C,
+            Piece::Rook => WHITE_ROOK_C,
+            Piece::Bishop => WHITE_BISHOP_C,
+            Piece::King => WHITE_KING_C,
+            Piece::Queen => WHITE_QUEEN_C,
+            Piece::Empty => '_',
+            Piece::Knight => WHITE_KNIGHT_C,
+        };
+        if self.side() == Side::Black {
+            c = c.to_lowercase().next().unwrap();
+        }
+        c
+    }
 }
 
 #[derive(Debug)]
@@ -88,8 +104,8 @@ impl Position {
             ]
         };
 
-        for (rank, pieces) in position_parts.iter().rev().enumerate() {
-            let mut idx = 0;
+        let mut idx = 0;
+        for pieces in position_parts.iter() {
             for pc in pieces.chars() {
                 if pc.is_ascii_digit() {
                     let digit = pc.to_digit(10).unwrap();
@@ -101,19 +117,19 @@ impl Position {
                     }
 
                 } else {
-                    pos.board[idx * rank] = match pc {
-                        WHITE_PAWN_C => &WHITE_PAWN,
+                    pos.board[idx] = match pc {
+                        WHITE_PAWN_C   => &WHITE_PAWN,
                         WHITE_KNIGHT_C => &WHITE_KNIGHT,
                         WHITE_BISHOP_C => &WHITE_BISHOP,
-                        WHITE_QUEEN_C => &WHITE_QUEEN,
-                        WHITE_KING_C => &WHITE_KING,
-                        WHITE_ROOK_C => &WHITE_ROOK,
-                        BLACK_PAWN_C => &BLACK_PAWN,
+                        WHITE_QUEEN_C  => &WHITE_QUEEN,
+                        WHITE_KING_C   => &WHITE_KING,
+                        WHITE_ROOK_C   => &WHITE_ROOK,
+                        BLACK_PAWN_C   => &BLACK_PAWN,
                         BLACK_KNIGHT_C => &BLACK_KNIGHT,
                         BLACK_BISHOP_C => &BLACK_BISHOP,
-                        BLACK_QUEEN_C => &BLACK_QUEEN,
-                        BLACK_KING_C => &BLACK_KING,
-                        BLACK_ROOK_C => &BLACK_ROOK,
+                        BLACK_QUEEN_C  => &BLACK_QUEEN,
+                        BLACK_KING_C   => &BLACK_KING,
+                        BLACK_ROOK_C   => &BLACK_ROOK,
                         other => panic!("error, invalid char in fen: {}", other),
                     };
                     idx += 1;
@@ -123,36 +139,54 @@ impl Position {
         }
         Ok(pos)
     }
+
+    pub fn to_bits(&self) -> (i64, i64) {
+        let mut b1: u64 = 0;
+        let mut b2: u64 = 0;
+        let mut shiftamt = 0;
+        for (idx, &sq) in self.board.iter().enumerate() {
+            let bob = sq.value.value();
+            if idx > 15  {
+                b1 += (bob as u64) << shiftamt;
+            } else {
+                b2 += (bob as u64) << shiftamt;
+            }
+            if idx % 8 == 0 {
+                shiftamt += 1;
+            }
+        }
+        (b1 as i64, b2 as i64)
+    }
 }
 
 
 // pieces
-const WHITE_ROOK_C: char   = 'R';
-const WHITE_KNIGHT_C: char = 'N';
-const WHITE_BISHOP_C: char = 'B';
-const WHITE_QUEEN_C: char  = 'Q';
-const WHITE_KING_C: char   = 'K';
-const WHITE_PAWN_C: char   = 'P';
-const BLACK_ROOK_C: char   = 'r';
-const BLACK_KNIGHT_C: char = 'n';
-const BLACK_BISHOP_C: char = 'b';
-const BLACK_QUEEN_C: char  = 'q';
-const BLACK_KING_C: char   = 'k';
-const BLACK_PAWN_C: char   = 'p';
+pub const WHITE_ROOK_C: char   = 'R';
+pub const WHITE_KNIGHT_C: char = 'N';
+pub const WHITE_BISHOP_C: char = 'B';
+pub const WHITE_QUEEN_C: char  = 'Q';
+pub const WHITE_KING_C: char   = 'K';
+pub const WHITE_PAWN_C: char   = 'P';
+pub const BLACK_ROOK_C: char   = 'r';
+pub const BLACK_KNIGHT_C: char = 'n';
+pub const BLACK_BISHOP_C: char = 'b';
+pub const BLACK_QUEEN_C: char  = 'q';
+pub const BLACK_KING_C: char   = 'k';
+pub const BLACK_PAWN_C: char   = 'p';
 
-static WHITE_ROOK: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Rook, Side::White) });
-static WHITE_KNIGHT: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Knight, Side::White) });
-static WHITE_BISHOP: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Bishop, Side::White) });
-static WHITE_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(Piece::Queen, Side::White) });
-static WHITE_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::King, Side::White) });
-static WHITE_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Pawn, Side::White) });
-static BLACK_ROOK: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Rook, Side::Black) });
-static BLACK_KNIGHT: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Knight, Side::Black) });
-static BLACK_BISHOP: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Bishop, Side::Black) });
-static BLACK_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(Piece::Queen, Side::Black) });
-static BLACK_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::King, Side::Black) });
-static BLACK_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Pawn, Side::Black) });
-static EMPTY: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Empty, Side::Black) });
+pub static WHITE_ROOK: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Rook, Side::White) });
+pub static WHITE_KNIGHT: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Knight, Side::White) });
+pub static WHITE_BISHOP: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Bishop, Side::White) });
+pub static WHITE_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(Piece::Queen, Side::White) });
+pub static WHITE_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::King, Side::White) });
+pub static WHITE_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Pawn, Side::White) });
+pub static BLACK_ROOK: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Rook, Side::Black) });
+pub static BLACK_KNIGHT: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Knight, Side::Black) });
+pub static BLACK_BISHOP: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Bishop, Side::Black) });
+pub static BLACK_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(Piece::Queen, Side::Black) });
+pub static BLACK_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::King, Side::Black) });
+pub static BLACK_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Pawn, Side::Black) });
+pub static EMPTY: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Empty, Side::Black) });
 
 // 4 bits = 16 == 12 pieces + 2
 // 4 * 8slots == 32 bits per row
