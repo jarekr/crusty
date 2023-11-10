@@ -141,21 +141,22 @@ impl Position {
     }
 
     pub fn to_bits(&self) -> (i64, i64) {
-        let mut b1: u64 = 0;
-        let mut b2: u64 = 0;
+        let mut b1: i64 = 0;
+        let mut b2: i64 = 0;
         let mut shiftamt = 0;
         for (idx, &sq) in self.board.iter().enumerate() {
             let bob = sq.value.value();
-            if idx > 15  {
-                b1 += (bob as u64) << shiftamt;
+            println!("idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt);
+            if idx < 32  {
+                b1 += (bob as i64) << shiftamt;
             } else {
-                b2 += (bob as u64) << shiftamt;
+                b2 += (bob as i64) << shiftamt - 4;
             }
-            if idx % 8 == 0 {
+            if (idx + 1) % 8 == 0 {
                 shiftamt += 1;
             }
         }
-        (b1 as i64, b2 as i64)
+        (b1, b2)
     }
 }
 
