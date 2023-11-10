@@ -33,5 +33,17 @@ fn main() {
         }
         counter += 1;
     }
-    dbg!(pos.to_bits());
+    let (r1, r2, r3, r4) = pos.to_bits();
+    dbg!(r1, r2, r3, r4);
+    let newpos = Position::from_bits(r1, r2, r3, r4).unwrap();
+    for &sq in newpos.board.iter() {
+        let piece: char = sq.to_char();
+
+        print!("{}", piece);
+        if counter % 8 == 0 {
+
+            println!();
+        }
+        counter += 1;
+    }
 }

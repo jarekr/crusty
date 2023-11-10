@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use std::path::PathBuf;
+use std::{path::PathBuf, collections::HashMap};
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct RustyConfig {
@@ -140,25 +140,83 @@ impl Position {
         Ok(pos)
     }
 
-    pub fn to_bits(&self) -> (i64, i64) {
-        let mut b1: i64 = 0;
-        let mut b2: i64 = 0;
+    pub fn to_bits(&self) -> (u64, u64, u64, u64) {
+        let mut r12: u64 = 0;
+        let mut r34: u64 = 0;
+        let mut r56: u64 = 0;
+        let mut r78: u64 = 0;
         let mut shiftamt = 0;
         for (idx, &sq) in self.board.iter().enumerate() {
             let bob = sq.value.value();
-            println!("idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt);
-            if idx < 32  {
-                b1 += (bob as i64) << shiftamt;
+            if idx < 16   {
+                r12 += (bob as u64) << shiftamt;
+                //println!("1 idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt);
+            } else if idx < 32 {
+                r34 += (bob as u64) << shiftamt - 64;
+                //println!("2 idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt - 64);
+            } else if idx < 48 {
+                r56 += (bob as u64) << shiftamt - 128;
+                //println!("3 idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt - 128);
             } else {
-                b2 += (bob as i64) << shiftamt - 4;
+                r78 += (bob as u64) << shiftamt - 192;
+                //println!("4 idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt - 192);
             }
-            if (idx + 1) % 8 == 0 {
-                shiftamt += 1;
-            }
+            shiftamt += 4;
         }
-        (b1, b2)
+        (r12, r34, r56, r78)
+    }
+
+    fn from_bits2(val: u64) -> [u8; 16] {
+        let mut offset = 0;
+
+        let mut bob: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+        for idx in 0..16 {
+            let p = ((val >> offset) & 0xfu64) as u8;
+            bob[idx] = p;
+            offset += 4;
+
+        }
+        bob
+
+    }
+
+    pub fn from_bits(r12: u64, r34: u64, r56: u64, r78: u64) -> Result<Position, &'static str> {
+        let mut pos: Position = Position { board:
+            [
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+            ]
+        };
+
+        let foo = WHITE_BISHOP.value.value();
+
+        for (idx, pn) in Position::from_bits2(r12).iter().enumerate() {
+            pos.board[idx] = VAL_TO_PIECE.get(pn).unwrap();
+        }
+        for (idx, pn) in Position::from_bits2(r34).iter().enumerate() {
+            pos.board[idx+16] = VAL_TO_PIECE.get(pn).unwrap();
+        }
+        for (idx, pn) in Position::from_bits2(r56).iter().enumerate() {
+            pos.board[idx+32] = VAL_TO_PIECE.get(pn).unwrap();
+        }
+        for (idx, pn) in Position::from_bits2(r78).iter().enumerate() {
+            pos.board[idx+48] = VAL_TO_PIECE.get(pn).unwrap();
+        }
+
+        Ok(pos)
     }
 }
+//
+//8, 9,10, 11, 12, 10, 9, 8
+// 1000 1001 1010 1011 1100 1010 1001 1000
+// 10001001101010111100101010011000
 
 
 // pieces
@@ -188,6 +246,19 @@ pub static BLACK_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(Pi
 pub static BLACK_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::King, Side::Black) });
 pub static BLACK_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Pawn, Side::Black) });
 pub static EMPTY: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Empty, Side::Black) });
+
+pub static VAL_TO_PIECE: Lazy<HashMap<u8, &Lazy<PieceInPlay>>> = Lazy::new(|| {
+    let mut m: HashMap<u8, &Lazy<PieceInPlay>> = HashMap::new();
+    let pieces: [&'static Lazy<PieceInPlay>; 13] = [
+        &WHITE_ROOK, &WHITE_KNIGHT, &WHITE_BISHOP, &WHITE_QUEEN, &WHITE_KING, &WHITE_PAWN,
+        &BLACK_ROOK, &BLACK_KNIGHT, &BLACK_BISHOP, &BLACK_QUEEN, &BLACK_KING, &BLACK_PAWN,
+        &EMPTY
+    ];
+    for p in pieces {
+        m.insert( p.value.value(), p);
+    }
+    m
+});
 
 // 4 bits = 16 == 12 pieces + 2
 // 4 * 8slots == 32 bits per row
