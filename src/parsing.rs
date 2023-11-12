@@ -12,6 +12,9 @@ use bilge::prelude::*;
 
 use once_cell::sync::Lazy;
 
+use pgn_reader::{Visitor, Skip, RawHeader, BufferedReader, SanPlus};
+
+
 // starting postion
 // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 // ... after 1. e4
@@ -80,17 +83,7 @@ pub struct Position{
 }
 
 impl Position {
-    pub fn parse_from_str(fen: &str) -> Result<Position, &str> {
-
-        let parts: Vec<_> = fen.split(' ').collect();
-        if parts.len() != 6 {
-            return Err("not enough parts");
-        }
-        let position_parts: Vec<_> = parts[0].split('/').collect();
-        if position_parts.len() != 8 {
-            return Err("not enough rows")
-        }
-
+    pub fn new() -> Position {
         let mut pos: Position = Position { board:
             [
                 &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
@@ -103,6 +96,21 @@ impl Position {
                 &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
             ]
         };
+        pos
+    }
+
+    pub fn parse_from_str(fen: &str) -> Result<Position, &str> {
+
+        let parts: Vec<_> = fen.split(' ').collect();
+        if parts.len() != 6 {
+            return Err("not enough parts");
+        }
+        let position_parts: Vec<_> = parts[0].split('/').collect();
+        if position_parts.len() != 8 {
+            return Err("not enough rows")
+        }
+
+        let mut pos: Position = Position::new();
 
         let mut idx = 0;
         for pieces in position_parts.iter() {
@@ -182,18 +190,7 @@ impl Position {
     }
 
     pub fn from_bits(r12: u64, r34: u64, r56: u64, r78: u64) -> Result<Position, &'static str> {
-        let mut pos: Position = Position { board:
-            [
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-            ]
-        };
+        let mut pos = Position::new();
 
         for (idx, pn) in Position::from_bits2(r12).iter().enumerate() {
             pos.board[idx] = VAL_TO_PIECE.get(pn).unwrap();
