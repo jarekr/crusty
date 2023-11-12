@@ -6,7 +6,7 @@ mod db;
 use db::Db;
 
 mod parsing;
-use parsing::Position;
+use parsing::BitPosition;
 
 #[derive(Parser)]
 struct Args {
@@ -21,15 +21,15 @@ fn main() {
     let db = Db::new(dbpath);
     db.init_schema();
     println!("This is where I am");
-    let pos: Position = Position::parse_from_str("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2").unwrap();
+    let pos: BitPosition = BitPosition::parse_from_str("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2").unwrap();
     print_pos(&pos);
     let (r1, r2, r3, r4) = pos.to_bits();
     dbg!(r1, r2, r3, r4);
-    let newpos = Position::from_bits(r1, r2, r3, r4).unwrap();
+    let newpos = BitPosition::from_bits(r1, r2, r3, r4).unwrap();
     print_pos(&newpos);
 }
 
-fn print_pos(p: &Position) {
+fn print_pos(p: &BitPosition) {
     let mut counter = 1;
     for &sq in p.board.iter() {
         let piece: char = sq.to_char();

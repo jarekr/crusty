@@ -14,6 +14,40 @@ use once_cell::sync::Lazy;
 
 use pgn_reader::{Visitor, Skip, RawHeader, BufferedReader, SanPlus};
 
+use shakmaty::{CastlingMode, Chess, Position};
+
+
+struct FenVisitor {
+    pub pos: Chess,
+    pub fens: Vec<BitPosition>,
+}
+
+impl FenVisitor {
+    pub fn new() -> FenVisitor {
+        FenVisitor { pos: Chess::default(), fens: Vec::new() }
+    }
+}
+
+impl Visitor for FenVisitor {
+    type Result = Vec<BitPosition>
+
+    fn begin_variation(&mut self) -> Skip {
+        Skip(true) // stay in the mainline
+    }
+
+    fn san(&mut self, san_plus: SanPlus) {
+        if let Ok(m) = san_plus.san.to_move(&self.pos) {
+            self.pos.play_unchecked(&m);
+        }
+        let self.pos.board.intoIter()
+    }
+
+
+    fn end_game(&mut self) -> Self::Result {
+        ::std::mem::Replace(&mut self.fens, Vec::new())
+    }
+}
+
 
 // starting postion
 // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -78,13 +112,13 @@ impl PieceInPlay {
 }
 
 #[derive(Debug)]
-pub struct Position{
+pub struct BitPosition{
     pub board: [&'static Lazy<PieceInPlay>; 64]
 }
 
-impl Position {
-    pub fn new() -> Position {
-        let mut pos: Position = Position { board:
+impl BitPosition {
+    pub fn new() -> BitPosition {
+        let mut pos: BitPosition = BitPosition { board:
             [
                 &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
                 &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
@@ -99,7 +133,7 @@ impl Position {
         pos
     }
 
-    pub fn parse_from_str(fen: &str) -> Result<Position, &str> {
+    pub fn parse_from_str(fen: &str) -> Result<BitPosition, &str> {
 
         let parts: Vec<_> = fen.split(' ').collect();
         if parts.len() != 6 {
@@ -110,7 +144,7 @@ impl Position {
             return Err("not enough rows")
         }
 
-        let mut pos: Position = Position::new();
+        let mut pos: BitPosition = BitPosition::new();
 
         let mut idx = 0;
         for pieces in position_parts.iter() {
@@ -189,19 +223,19 @@ impl Position {
 
     }
 
-    pub fn from_bits(r12: u64, r34: u64, r56: u64, r78: u64) -> Result<Position, &'static str> {
-        let mut pos = Position::new();
+    pub fn from_bits(r12: u64, r34: u64, r56: u64, r78: u64) -> Result<BitPosition, &'static str> {
+        let mut pos = BitPosition::new();
 
-        for (idx, pn) in Position::from_bits2(r12).iter().enumerate() {
+        for (idx, pn) in BitPosition::from_bits2(r12).iter().enumerate() {
             pos.board[idx] = VAL_TO_PIECE.get(pn).unwrap();
         }
-        for (idx, pn) in Position::from_bits2(r34).iter().enumerate() {
+        for (idx, pn) in BitPosition::from_bits2(r34).iter().enumerate() {
             pos.board[idx+16] = VAL_TO_PIECE.get(pn).unwrap();
         }
-        for (idx, pn) in Position::from_bits2(r56).iter().enumerate() {
+        for (idx, pn) in BitPosition::from_bits2(r56).iter().enumerate() {
             pos.board[idx+32] = VAL_TO_PIECE.get(pn).unwrap();
         }
-        for (idx, pn) in Position::from_bits2(r78).iter().enumerate() {
+        for (idx, pn) in BitPosition::from_bits2(r78).iter().enumerate() {
             pos.board[idx+48] = VAL_TO_PIECE.get(pn).unwrap();
         }
 
