@@ -29,7 +29,7 @@ impl FenVisitor {
 }
 
 impl Visitor for FenVisitor {
-    type Result = Vec<BitPosition>
+    type Result = Vec<BitPosition>;
 
     fn begin_variation(&mut self) -> Skip {
         Skip(true) // stay in the mainline
@@ -39,12 +39,12 @@ impl Visitor for FenVisitor {
         if let Ok(m) = san_plus.san.to_move(&self.pos) {
             self.pos.play_unchecked(&m);
         }
-        let self.pos.board.intoIter()
+        //let self.pos.board.intoIter()
     }
 
 
     fn end_game(&mut self) -> Self::Result {
-        ::std::mem::Replace(&mut self.fens, Vec::new())
+        ::std::mem::replace(&mut self.fens, Vec::new())
     }
 }
 
