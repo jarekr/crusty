@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use std::{path::PathBuf, collections::HashMap};
+use std::{path::PathBuf, collections::HashMap, ascii::AsciiExt};
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct RustyConfig {
@@ -14,7 +14,7 @@ use once_cell::sync::Lazy;
 
 use pgn_reader::{Visitor, Skip, RawHeader, BufferedReader, SanPlus};
 
-use shakmaty::{CastlingMode, Chess, Position};
+use shakmaty::{CastlingMode, Chess, Position, Piece, Role};
 
 
 struct FenVisitor {
@@ -39,7 +39,23 @@ impl Visitor for FenVisitor {
         if let Ok(m) = san_plus.san.to_move(&self.pos) {
             self.pos.play_unchecked(&m);
         }
-        //let self.pos.board.intoIter()
+        let mut biter = self.pos.board().into_iter();
+
+        let mut bp = BitPosition::new();
+        let mut i = 0;
+
+        for (square, piece) in biter.next() {
+            let isblack = piece.color.is_black();
+            bp.board[i] = match piece.role {
+                Role::Bishop => if isblack { &BLACK_BISHOP } else { &WHITE_BISHOP }
+                Role::Knight => if isblack { &BLACK_KNIGHT } else { &WHITE_KNIGHT }
+                Role::Rook => if isblack { &BLACK_ROOK } else { &WHITE_ROOK }
+                Role::King => if isblack { &BLACK_KING } else { &WHITE_KING }
+                Role::Queen => if isblack { &BLACK_QUEEN } else { &WHITE_QUEEN }
+                Role::Pawn => if isblack { &BLACK_PAWN } else { &WHITE_PAWN }
+            }
+
+        }
     }
 
 
@@ -67,7 +83,7 @@ impl Visitor for FenVisitor {
 
 #[bitsize(3)]
 #[derive(Debug, PartialEq, FromBits, Default, Clone)]
-pub enum Piece {
+pub enum BitPiece {
     Rook, Knight, Bishop, Queen, King, Pawn,
     #[fallback]
     #[default]
@@ -85,24 +101,24 @@ pub enum Side {
 #[bitsize(4)]
 #[derive(DebugBits, PartialEq, FromBits, Default, Clone)]
 pub struct PieceInPlay {
-    pub piece: Piece,
+    pub piece: BitPiece,
     pub side: Side,
 }
 
 impl PieceInPlay {
-    pub fn news(p: Piece, s: Side) -> PieceInPlay {
+    pub fn news(p: BitPiece, s: Side) -> PieceInPlay {
         PieceInPlay::new(p, s)
     }
 
     pub fn to_char(&self) -> char {
         let mut c = match self.piece() {
-            Piece::Pawn => WHITE_PAWN_C,
-            Piece::Rook => WHITE_ROOK_C,
-            Piece::Bishop => WHITE_BISHOP_C,
-            Piece::King => WHITE_KING_C,
-            Piece::Queen => WHITE_QUEEN_C,
-            Piece::Empty => '_',
-            Piece::Knight => WHITE_KNIGHT_C,
+            BitPiece::Pawn => WHITE_PAWN_C,
+            BitPiece::Rook => WHITE_ROOK_C,
+            BitPiece::Bishop => WHITE_BISHOP_C,
+            BitPiece::King => WHITE_KING_C,
+            BitPiece::Queen => WHITE_QUEEN_C,
+            BitPiece::Empty => '_',
+            BitPiece::Knight => WHITE_KNIGHT_C,
         };
         if self.side() == Side::Black {
             c = c.to_lowercase().next().unwrap();
@@ -262,19 +278,19 @@ pub const BLACK_QUEEN_C: char  = 'q';
 pub const BLACK_KING_C: char   = 'k';
 pub const BLACK_PAWN_C: char   = 'p';
 
-pub static WHITE_ROOK: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Rook,   Side::White) });
-pub static WHITE_KNIGHT: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Knight, Side::White) });
-pub static WHITE_BISHOP: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Bishop, Side::White) });
-pub static WHITE_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(Piece::Queen,  Side::White) });
-pub static WHITE_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::King,   Side::White) });
-pub static WHITE_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Pawn,   Side::White) });
-pub static BLACK_ROOK: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Rook,   Side::Black) });
-pub static BLACK_KNIGHT: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Knight, Side::Black) });
-pub static BLACK_BISHOP: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(Piece::Bishop, Side::Black) });
-pub static BLACK_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(Piece::Queen,  Side::Black) });
-pub static BLACK_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::King,   Side::Black) });
-pub static BLACK_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(Piece::Pawn,   Side::Black) });
-pub static EMPTY: Lazy<PieceInPlay>        = Lazy::new( || { PieceInPlay::new(Piece::Empty,  Side::Black) });
+pub static WHITE_ROOK: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::Rook,   Side::White) });
+pub static WHITE_KNIGHT: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(BitPiece::Knight, Side::White) });
+pub static WHITE_BISHOP: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(BitPiece::Bishop, Side::White) });
+pub static WHITE_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(BitPiece::Queen,  Side::White) });
+pub static WHITE_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::King,   Side::White) });
+pub static WHITE_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::Pawn,   Side::White) });
+pub static BLACK_ROOK: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::Rook,   Side::Black) });
+pub static BLACK_KNIGHT: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(BitPiece::Knight, Side::Black) });
+pub static BLACK_BISHOP: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(BitPiece::Bishop, Side::Black) });
+pub static BLACK_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(BitPiece::Queen,  Side::Black) });
+pub static BLACK_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::King,   Side::Black) });
+pub static BLACK_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::Pawn,   Side::Black) });
+pub static EMPTY: Lazy<PieceInPlay>        = Lazy::new( || { PieceInPlay::new(BitPiece::Empty,  Side::Black) });
 
 pub static VAL_TO_PIECE: Lazy<HashMap<u8, &Lazy<PieceInPlay>>> = Lazy::new(|| {
     let mut m: HashMap<u8, &Lazy<PieceInPlay>> = HashMap::new();

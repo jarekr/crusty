@@ -13,6 +13,8 @@ struct Args {
     config_path: PathBuf
 }
 
+use shakmaty::{CastlingMode, Chess, Position};
+
 fn main() {
 
     let args = Args::parse();
