@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
-use std::{path::PathBuf, collections::HashMap, ascii::AsciiExt};
+use serde::{Deserialize, Serialize};
+use std::{ascii::AsciiExt, collections::HashMap, path::PathBuf};
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct RustyConfig {
@@ -12,10 +12,9 @@ use bilge::prelude::*;
 
 use once_cell::sync::Lazy;
 
-use pgn_reader::{Visitor, Skip, RawHeader, BufferedReader, SanPlus};
+use pgn_reader::{BufferedReader, RawHeader, SanPlus, Skip, Visitor};
 
-use shakmaty::{CastlingMode, Chess, Position, Piece, Role};
-
+use shakmaty::{CastlingMode, Chess, Piece, Position, Role};
 
 struct FenVisitor {
     pub pos: Chess,
@@ -24,7 +23,10 @@ struct FenVisitor {
 
 impl FenVisitor {
     pub fn new() -> FenVisitor {
-        FenVisitor { pos: Chess::default(), fens: Vec::new() }
+        FenVisitor {
+            pos: Chess::default(),
+            fens: Vec::new(),
+        }
     }
 }
 
@@ -47,23 +49,56 @@ impl Visitor for FenVisitor {
         for (square, piece) in biter.next() {
             let isblack = piece.color.is_black();
             bp.board[i] = match piece.role {
-                Role::Bishop => if isblack { &BLACK_BISHOP } else { &WHITE_BISHOP }
-                Role::Knight => if isblack { &BLACK_KNIGHT } else { &WHITE_KNIGHT }
-                Role::Rook => if isblack { &BLACK_ROOK } else { &WHITE_ROOK }
-                Role::King => if isblack { &BLACK_KING } else { &WHITE_KING }
-                Role::Queen => if isblack { &BLACK_QUEEN } else { &WHITE_QUEEN }
-                Role::Pawn => if isblack { &BLACK_PAWN } else { &WHITE_PAWN }
+                Role::Bishop => {
+                    if isblack {
+                        &BLACK_BISHOP
+                    } else {
+                        &WHITE_BISHOP
+                    }
+                }
+                Role::Knight => {
+                    if isblack {
+                        &BLACK_KNIGHT
+                    } else {
+                        &WHITE_KNIGHT
+                    }
+                }
+                Role::Rook => {
+                    if isblack {
+                        &BLACK_ROOK
+                    } else {
+                        &WHITE_ROOK
+                    }
+                }
+                Role::King => {
+                    if isblack {
+                        &BLACK_KING
+                    } else {
+                        &WHITE_KING
+                    }
+                }
+                Role::Queen => {
+                    if isblack {
+                        &BLACK_QUEEN
+                    } else {
+                        &WHITE_QUEEN
+                    }
+                }
+                Role::Pawn => {
+                    if isblack {
+                        &BLACK_PAWN
+                    } else {
+                        &WHITE_PAWN
+                    }
+                }
             }
-
         }
     }
-
 
     fn end_game(&mut self) -> Self::Result {
         ::std::mem::replace(&mut self.fens, Vec::new())
     }
 }
-
 
 // starting postion
 // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -84,7 +119,12 @@ impl Visitor for FenVisitor {
 #[bitsize(3)]
 #[derive(Debug, PartialEq, FromBits, Default, Clone)]
 pub enum BitPiece {
-    Rook, Knight, Bishop, Queen, King, Pawn,
+    Rook,
+    Knight,
+    Bishop,
+    Queen,
+    King,
+    Pawn,
     #[fallback]
     #[default]
     Empty,
@@ -95,7 +135,7 @@ pub enum BitPiece {
 pub enum Side {
     White,
     #[default]
-    Black
+    Black,
 }
 
 #[bitsize(4)]
@@ -128,36 +168,34 @@ impl PieceInPlay {
 }
 
 #[derive(Debug)]
-pub struct BitPosition{
-    pub board: [&'static Lazy<PieceInPlay>; 64]
+pub struct BitPosition {
+    pub board: [&'static Lazy<PieceInPlay>; 64],
 }
 
 impl BitPosition {
     pub fn new() -> BitPosition {
-        let mut pos: BitPosition = BitPosition { board:
-            [
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-            ]
+        let mut pos: BitPosition = BitPosition {
+            board: [
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+            ],
         };
         pos
     }
 
     pub fn parse_from_str(fen: &str) -> Result<BitPosition, &str> {
-
         let parts: Vec<_> = fen.split(' ').collect();
         if parts.len() != 6 {
             return Err("not enough parts");
         }
         let position_parts: Vec<_> = parts[0].split('/').collect();
         if position_parts.len() != 8 {
-            return Err("not enough rows")
+            return Err("not enough rows");
         }
 
         let mut pos: BitPosition = BitPosition::new();
@@ -171,28 +209,26 @@ impl BitPosition {
                         panic!("invalid digit in fen")
                     }
                     for _ in 0..digit {
-                        idx  += 1;
+                        idx += 1;
                     }
-
                 } else {
                     pos.board[idx] = match pc {
-                        WHITE_PAWN_C   => &WHITE_PAWN,
+                        WHITE_PAWN_C => &WHITE_PAWN,
                         WHITE_KNIGHT_C => &WHITE_KNIGHT,
                         WHITE_BISHOP_C => &WHITE_BISHOP,
-                        WHITE_QUEEN_C  => &WHITE_QUEEN,
-                        WHITE_KING_C   => &WHITE_KING,
-                        WHITE_ROOK_C   => &WHITE_ROOK,
-                        BLACK_PAWN_C   => &BLACK_PAWN,
+                        WHITE_QUEEN_C => &WHITE_QUEEN,
+                        WHITE_KING_C => &WHITE_KING,
+                        WHITE_ROOK_C => &WHITE_ROOK,
+                        BLACK_PAWN_C => &BLACK_PAWN,
                         BLACK_KNIGHT_C => &BLACK_KNIGHT,
                         BLACK_BISHOP_C => &BLACK_BISHOP,
-                        BLACK_QUEEN_C  => &BLACK_QUEEN,
-                        BLACK_KING_C   => &BLACK_KING,
-                        BLACK_ROOK_C   => &BLACK_ROOK,
+                        BLACK_QUEEN_C => &BLACK_QUEEN,
+                        BLACK_KING_C => &BLACK_KING,
+                        BLACK_ROOK_C => &BLACK_ROOK,
                         other => panic!("error, invalid char in fen: {}", other),
                     };
                     idx += 1;
                 }
-
             }
         }
         Ok(pos)
@@ -206,7 +242,7 @@ impl BitPosition {
         let mut shiftamt = 0;
         for (idx, &sq) in self.board.iter().enumerate() {
             let bob = sq.value.value();
-            if idx < 16   {
+            if idx < 16 {
                 r12 += (bob as u64) << shiftamt;
                 //println!("1 idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt);
             } else if idx < 32 {
@@ -233,10 +269,8 @@ impl BitPosition {
             let p = ((val >> offset) & 0xfu64) as u8;
             bob[idx] = p;
             offset += 4;
-
         }
         bob
-
     }
 
     pub fn from_bits(r12: u64, r34: u64, r56: u64, r78: u64) -> Result<BitPosition, &'static str> {
@@ -246,13 +280,13 @@ impl BitPosition {
             pos.board[idx] = VAL_TO_PIECE.get(pn).unwrap();
         }
         for (idx, pn) in BitPosition::from_bits2(r34).iter().enumerate() {
-            pos.board[idx+16] = VAL_TO_PIECE.get(pn).unwrap();
+            pos.board[idx + 16] = VAL_TO_PIECE.get(pn).unwrap();
         }
         for (idx, pn) in BitPosition::from_bits2(r56).iter().enumerate() {
-            pos.board[idx+32] = VAL_TO_PIECE.get(pn).unwrap();
+            pos.board[idx + 32] = VAL_TO_PIECE.get(pn).unwrap();
         }
         for (idx, pn) in BitPosition::from_bits2(r78).iter().enumerate() {
-            pos.board[idx+48] = VAL_TO_PIECE.get(pn).unwrap();
+            pos.board[idx + 48] = VAL_TO_PIECE.get(pn).unwrap();
         }
 
         Ok(pos)
@@ -263,44 +297,65 @@ impl BitPosition {
 // 1000 1001 1010 1011 1100 1010 1001 1000
 // 10001001101010111100101010011000
 
-
 // pieces
-pub const WHITE_ROOK_C: char   = 'R';
+pub const WHITE_ROOK_C: char = 'R';
 pub const WHITE_KNIGHT_C: char = 'N';
 pub const WHITE_BISHOP_C: char = 'B';
-pub const WHITE_QUEEN_C: char  = 'Q';
-pub const WHITE_KING_C: char   = 'K';
-pub const WHITE_PAWN_C: char   = 'P';
-pub const BLACK_ROOK_C: char   = 'r';
+pub const WHITE_QUEEN_C: char = 'Q';
+pub const WHITE_KING_C: char = 'K';
+pub const WHITE_PAWN_C: char = 'P';
+pub const BLACK_ROOK_C: char = 'r';
 pub const BLACK_KNIGHT_C: char = 'n';
 pub const BLACK_BISHOP_C: char = 'b';
-pub const BLACK_QUEEN_C: char  = 'q';
-pub const BLACK_KING_C: char   = 'k';
-pub const BLACK_PAWN_C: char   = 'p';
+pub const BLACK_QUEEN_C: char = 'q';
+pub const BLACK_KING_C: char = 'k';
+pub const BLACK_PAWN_C: char = 'p';
 
-pub static WHITE_ROOK: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::Rook,   Side::White) });
-pub static WHITE_KNIGHT: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(BitPiece::Knight, Side::White) });
-pub static WHITE_BISHOP: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(BitPiece::Bishop, Side::White) });
-pub static WHITE_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(BitPiece::Queen,  Side::White) });
-pub static WHITE_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::King,   Side::White) });
-pub static WHITE_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::Pawn,   Side::White) });
-pub static BLACK_ROOK: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::Rook,   Side::Black) });
-pub static BLACK_KNIGHT: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(BitPiece::Knight, Side::Black) });
-pub static BLACK_BISHOP: Lazy<PieceInPlay> = Lazy::new( || { PieceInPlay::new(BitPiece::Bishop, Side::Black) });
-pub static BLACK_QUEEN: Lazy<PieceInPlay>  = Lazy::new( || { PieceInPlay::new(BitPiece::Queen,  Side::Black) });
-pub static BLACK_KING: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::King,   Side::Black) });
-pub static BLACK_PAWN: Lazy<PieceInPlay>   = Lazy::new( || { PieceInPlay::new(BitPiece::Pawn,   Side::Black) });
-pub static EMPTY: Lazy<PieceInPlay>        = Lazy::new( || { PieceInPlay::new(BitPiece::Empty,  Side::Black) });
+pub static WHITE_ROOK: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::Rook, Side::White));
+pub static WHITE_KNIGHT: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::Knight, Side::White));
+pub static WHITE_BISHOP: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::Bishop, Side::White));
+pub static WHITE_QUEEN: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::Queen, Side::White));
+pub static WHITE_KING: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::King, Side::White));
+pub static WHITE_PAWN: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::Pawn, Side::White));
+pub static BLACK_ROOK: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::Rook, Side::Black));
+pub static BLACK_KNIGHT: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::Knight, Side::Black));
+pub static BLACK_BISHOP: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::Bishop, Side::Black));
+pub static BLACK_QUEEN: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::Queen, Side::Black));
+pub static BLACK_KING: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::King, Side::Black));
+pub static BLACK_PAWN: Lazy<PieceInPlay> =
+    Lazy::new(|| PieceInPlay::new(BitPiece::Pawn, Side::Black));
+pub static EMPTY: Lazy<PieceInPlay> = Lazy::new(|| PieceInPlay::new(BitPiece::Empty, Side::Black));
 
 pub static VAL_TO_PIECE: Lazy<HashMap<u8, &Lazy<PieceInPlay>>> = Lazy::new(|| {
     let mut m: HashMap<u8, &Lazy<PieceInPlay>> = HashMap::new();
     let pieces: [&'static Lazy<PieceInPlay>; 13] = [
-        &WHITE_ROOK, &WHITE_KNIGHT, &WHITE_BISHOP, &WHITE_QUEEN, &WHITE_KING, &WHITE_PAWN,
-        &BLACK_ROOK, &BLACK_KNIGHT, &BLACK_BISHOP, &BLACK_QUEEN, &BLACK_KING, &BLACK_PAWN,
-        &EMPTY
+        &WHITE_ROOK,
+        &WHITE_KNIGHT,
+        &WHITE_BISHOP,
+        &WHITE_QUEEN,
+        &WHITE_KING,
+        &WHITE_PAWN,
+        &BLACK_ROOK,
+        &BLACK_KNIGHT,
+        &BLACK_BISHOP,
+        &BLACK_QUEEN,
+        &BLACK_KING,
+        &BLACK_PAWN,
+        &EMPTY,
     ];
     for p in pieces {
-        m.insert( p.value.value(), p);
+        m.insert(p.value.value(), p);
     }
     m
 });
