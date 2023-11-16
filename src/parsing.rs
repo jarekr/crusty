@@ -44,11 +44,6 @@ impl Visitor for FenVisitor {
         }
         let mut biter = self.pos.board().clone().into_iter();
 
-        println!(
-            "fen is now: {}",
-            self.pos.board().board_fen(Bitboard::EMPTY)
-        );
-
         let mut bp = BitPosition::new();
 
         for (square, piece) in biter.by_ref() {
@@ -251,16 +246,12 @@ impl BitPosition {
             let bob = sq.value.value();
             if idx < 16 {
                 r12 += (bob as u64) << shiftamt;
-                //println!("1 idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt);
             } else if idx < 32 {
                 r34 += (bob as u64) << shiftamt - 64;
-                //println!("2 idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt - 64);
             } else if idx < 48 {
                 r56 += (bob as u64) << shiftamt - 128;
-                //println!("3 idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt - 128);
             } else {
                 r78 += (bob as u64) << shiftamt - 192;
-                //println!("4 idx: {}, value: {}, shiftby:{}", idx, bob, shiftamt - 192);
             }
             shiftamt += 4;
         }
