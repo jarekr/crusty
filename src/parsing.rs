@@ -14,7 +14,8 @@ use once_cell::sync::Lazy;
 
 use pgn_reader::{BufferedReader, RawHeader, SanPlus, Skip, Visitor};
 
-use shakmaty::{CastlingMode, Chess, Piece, Position, Role};
+use shakmaty::bitboard::Bitboard;
+use shakmaty::{CastlingMode, Chess, Piece, Position, Role, Square};
 
 pub struct FenVisitor {
     pos: Chess,
@@ -43,11 +44,16 @@ impl Visitor for FenVisitor {
         }
         let mut biter = self.pos.board().clone().into_iter();
 
-        let mut bp = BitPosition::new();
-        let mut i = 0;
+        println!(
+            "fen is now: {}",
+            self.pos.board().board_fen(Bitboard::EMPTY)
+        );
 
-        for (square, piece) in biter.next() {
+        let mut bp = BitPosition::new();
+
+        for (square, piece) in biter.by_ref() {
             let isblack = piece.color.is_black();
+            let i: usize = square.into();
             bp.board[i] = match piece.role {
                 Role::Bishop => {
                     if isblack {
@@ -91,8 +97,9 @@ impl Visitor for FenVisitor {
                         &WHITE_PAWN
                     }
                 }
-            }
+            };
         }
+        self.fens.push(bp);
     }
 
     fn end_game(&mut self) -> Self::Result {
