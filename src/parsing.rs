@@ -16,9 +16,9 @@ use pgn_reader::{BufferedReader, RawHeader, SanPlus, Skip, Visitor};
 
 use shakmaty::{CastlingMode, Chess, Piece, Position, Role};
 
-struct FenVisitor {
-    pub pos: Chess,
-    pub fens: Vec<BitPosition>,
+pub struct FenVisitor {
+    pos: Chess,
+    fens: Vec<BitPosition>,
 }
 
 impl FenVisitor {
@@ -41,7 +41,7 @@ impl Visitor for FenVisitor {
         if let Ok(m) = san_plus.san.to_move(&self.pos) {
             self.pos.play_unchecked(&m);
         }
-        let mut biter = self.pos.board().into_iter();
+        let mut biter = self.pos.board().clone().into_iter();
 
         let mut bp = BitPosition::new();
         let mut i = 0;

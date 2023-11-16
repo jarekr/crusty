@@ -1,21 +1,40 @@
 use clap::Parser;
 use colored::*;
+use std::fs;
 use std::path::{Path, PathBuf};
-
 mod db;
 use db::Db;
 
 mod parsing;
-use parsing::BitPosition;
+use parsing::{BitPosition, FenVisitor};
 
 #[derive(Parser)]
 struct Args {
     config_path: PathBuf,
 }
 
-use shakmaty::{CastlingMode, Chess, Position};
+use pgn_reader::BufferedReader;
 
 fn main() {
+    let args = Args::parse();
+    println!(
+        "called with arg : {}",
+        args.config_path.display().to_string().green()
+    );
+    let contents = fs::read_to_string(args.config_path).expect("foo");
+    let mut reader = BufferedReader::new_cursor(contents.into_bytes());
+
+    let mut fenv = FenVisitor::new();
+    let result = reader
+        .read_game(&mut fenv)
+        .expect("parsing game failed")
+        .unwrap();
+    for bp in result {
+        print_pos(&bp);
+    }
+}
+
+fn bob() {
     let args = Args::parse();
     println!(
         "called with config_path: {}",
