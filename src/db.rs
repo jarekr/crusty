@@ -1,6 +1,7 @@
 use const_format::concatcp;
 use rusqlite::{named_params, Connection, OpenFlags, Error};
-use std::path::Path;
+use std::{path::Path, vec, error::Error};
+
 
 const GAMES_TABLE: &str = "games";
 const GAMES_DDSQL: &str = concatcp!(
@@ -41,6 +42,12 @@ const INSERT_INTO_POSITIONS_SQL: &str = concatcp!(
     "INSERT INTO ",
     POSITIONS_TABLE,
     " (r12, r34, r56, r78) VALUES (:r12, :r34, :r56, :r78)"
+);
+
+const GET_ALL_POSITIONS_SQL: &str = concatcp!(
+    "SELECT id, r12, r34, r56, r78 FROM ",
+    POSITIONS_TABLE,
+    " ORDER BY id"
 );
 
 pub struct Db {
@@ -108,12 +115,28 @@ pub struct Position {
     pub r78: u64,
 }
 
+const MAX_SQLITE_INT: u64 = 2u64.pow(63) - 1;
 impl Position {
+
+    //fn convert_to(x: BitArray(uint=x, length=64).int if x > MAX_SQLITE_INT else x
+    //        convert_hash_from = lambda x: BitArray(int=x, length=64).uint if x < 0 else x
+
     pub fn insert(db: &Db, r12: u64, r34: u64, r56: u64, r78: u64) -> Result<usize, Error> {
         let mut stmt = db
             .conn
             .prepare(INSERT_INTO_POSITIONS_SQL)
             .expect("prepare failed");
-        stmt.execute(named_params! {":r12": r12, ":r34": r34, ":r56": r56, ":r78": r78 })
+
+        stmt.execute(named_params! {":r12": r12 as i64, ":r34": r34 as i64, ":r56": r56 as i64, ":r78": r78 as i64 })
+    }
+    pub fn get_all(db: &Db) -> Result<Vec<(u64, u64, u64, u64)>, Error> {
+        let mut stmt = db
+        .conn
+        .prepare(GET_ALL_POSITIONS_SQL)
+        .expect("failed to prepare get_all_positions_sql");
+
+        stmt.query_map([], |row|{
+            Ok()
+        }
     }
 }
