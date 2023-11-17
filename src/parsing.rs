@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::{ascii::AsciiExt, collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct RustyConfig {
