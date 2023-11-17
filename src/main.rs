@@ -38,7 +38,7 @@ fn main() {
         //print_pos(&bp);
         match Position::insert(&db, r12, r34, r56, r78) {
             Err(why) => panic!("failed to insert: {}", why),
-            Ok(_) => ()
+            Ok(_) => (),
         };
     }
 }

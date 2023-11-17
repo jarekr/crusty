@@ -1,7 +1,6 @@
 use const_format::concatcp;
-use rusqlite::{named_params, Connection, OpenFlags, Error};
-use std::{path::Path, vec, error::Error};
-
+use rusqlite::{named_params, Connection, Error, OpenFlags};
+use std::path::Path;
 
 const GAMES_TABLE: &str = "games";
 const GAMES_DDSQL: &str = concatcp!(
@@ -117,7 +116,6 @@ pub struct Position {
 
 const MAX_SQLITE_INT: u64 = 2u64.pow(63) - 1;
 impl Position {
-
     //fn convert_to(x: BitArray(uint=x, length=64).int if x > MAX_SQLITE_INT else x
     //        convert_hash_from = lambda x: BitArray(int=x, length=64).uint if x < 0 else x
 
@@ -131,18 +129,14 @@ impl Position {
     }
     pub fn get_all(db: &Db) -> Result<Vec<(u32, u64, u64, u64, u64)>, Error> {
         let mut stmt = db
-        .conn
-        .prepare(GET_ALL_POSITIONS_SQL)
-        .expect("failed to prepare get_all_positions_sql");
+            .conn
+            .prepare(GET_ALL_POSITIONS_SQL)
+            .expect("failed to prepare get_all_positions_sql");
 
-        //Ok(stmt.query([])?.map(|row|  { (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4)) })).iter().collect()
-        Ok(stmt.query_map([], |r| {
-            let r1 = r.get(0)?;
-            (r1, r1, r1, r1, r1)
-        }).map( |f| { (f.)}).iter().collect())
-        //let values_iter = stmt.query_map([], |row| {
-        ////    (row.get(0)?,row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)
-        //})?;
-        //stmt.quer
+        stmt.query_map([], |r| {
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
+        })
+        .unwrap()
+        .collect()
     }
 }
