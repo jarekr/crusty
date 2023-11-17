@@ -129,14 +129,20 @@ impl Position {
 
         stmt.execute(named_params! {":r12": r12 as i64, ":r34": r34 as i64, ":r56": r56 as i64, ":r78": r78 as i64 })
     }
-    pub fn get_all(db: &Db) -> Result<Vec<(u64, u64, u64, u64)>, Error> {
+    pub fn get_all(db: &Db) -> Result<Vec<(u32, u64, u64, u64, u64)>, Error> {
         let mut stmt = db
         .conn
         .prepare(GET_ALL_POSITIONS_SQL)
         .expect("failed to prepare get_all_positions_sql");
 
-        stmt.query_map([], |row|{
-            Ok()
-        }
+        //Ok(stmt.query([])?.map(|row|  { (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4)) })).iter().collect()
+        Ok(stmt.query_map([], |r| {
+            let r1 = r.get(0)?;
+            (r1, r1, r1, r1, r1)
+        }).map( |f| { (f.)}).iter().collect())
+        //let values_iter = stmt.query_map([], |row| {
+        ////    (row.get(0)?,row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)
+        //})?;
+        //stmt.quer
     }
 }
