@@ -176,7 +176,7 @@ pub struct BitPosition {
 
 impl BitPosition {
     pub fn new() -> BitPosition {
-        let mut pos: BitPosition = BitPosition {
+        BitPosition {
             board: [
                 &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
                 &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
@@ -186,8 +186,7 @@ impl BitPosition {
                 &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
                 &EMPTY, &EMPTY, &EMPTY, &EMPTY,
             ],
-        };
-        pos
+        }
     }
 
     pub fn parse_from_str(fen: &str) -> Result<BitPosition, &str> {

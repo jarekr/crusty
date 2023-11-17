@@ -21,7 +21,7 @@ fn main() {
         "called with arg : {}",
         args.config_path.display().to_string().green()
     );
-    let contents = fs::read_to_string(args.config_path).expect("foo");
+    let contents = fs::read_to_string(&args.config_path).expect("foo");
     let mut reader = BufferedReader::new_cursor(contents.into_bytes());
 
     let mut fenv = FenVisitor::new();
@@ -40,6 +40,9 @@ fn main() {
             Err(why) => panic!("failed to insert: {}", why),
             Ok(_) => (),
         };
+    }
+    if args.config_path.ends_with("child") {
+        bob();
     }
 }
 
