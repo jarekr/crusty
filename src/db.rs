@@ -62,7 +62,7 @@ impl Db {
     }
 
     pub fn init_schema(&self) -> () {
-        for sql in [GAMES_DDSQL] {
+        for sql in [GAMES_DDSQL, POSITIONS_DDSQL] {
             self.create_schema(sql);
         }
     }
@@ -82,7 +82,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn query_by_id(db: Db, id: u32) -> Option<Game> {
+    pub fn query_by_id(db: &Db, id: u32) -> Option<Game> {
         let mut stmt = db
             .conn
             .prepare(GET_BY_ID_GAMES_SQL)
@@ -109,7 +109,7 @@ pub struct Position {
 }
 
 impl Position {
-    pub fn insert(db: Db, r12: u64, r34: u64, r56: u64, r78: u64) -> Result<usize, Error> {
+    pub fn insert(db: &Db, r12: u64, r34: u64, r56: u64, r78: u64) -> Result<usize, Error> {
         let mut stmt = db
             .conn
             .prepare(INSERT_INTO_POSITIONS_SQL)
@@ -117,4 +117,3 @@ impl Position {
         stmt.execute(named_params! {":r12": r12, ":r34": r34, ":r56": r56, ":r78": r78 })
     }
 }
-

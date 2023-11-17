@@ -3,7 +3,7 @@ use colored::*;
 use std::fs;
 use std::path::{Path, PathBuf};
 mod db;
-use db::Db;
+use db::{Db, Position};
 
 mod parsing;
 use parsing::{BitPosition, FenVisitor};
@@ -29,8 +29,17 @@ fn main() {
         .read_game(&mut fenv)
         .expect("parsing game failed")
         .unwrap();
+
+    let dbpath = Path::new("data.db");
+    let db = Db::new(dbpath);
+    db.init_schema();
     for bp in result {
-        print_pos(&bp);
+        let (r12, r34, r56, r78) = bp.to_bits();
+        //print_pos(&bp);
+        match Position::insert(&db, r12, r34, r56, r78) {
+            Err(why) => panic!("failed to insert: {}", why),
+            Ok(_) => ()
+        };
     }
 }
 
