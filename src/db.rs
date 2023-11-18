@@ -51,29 +51,13 @@ const R78_DDSQL: &str = concatcp!(
     " ( id INTEGER PRIMARY KEY, row INTEGER UNIQUE NOT NULL)"
 );
 
-const INSERT_INTO_R12_SQL: &str = concatcp!(
-    "INSERT INTO ",
-    R12_TABLE,
-    " ( row ) VALUES (:row)"
-);
+const INSERT_INTO_R12_SQL: &str = concatcp!("INSERT INTO ", R12_TABLE, " ( row ) VALUES (:row)");
 const R12_GET_ID: &str = concatcp!("SELECT id FROM ", R12_TABLE, " WHERE row = :row");
-const INSERT_INTO_R34_SQL: &str = concatcp!(
-    "INSERT INTO ",
-    R34_TABLE,
-    " ( row ) VALUES (:row)"
-);
+const INSERT_INTO_R34_SQL: &str = concatcp!("INSERT INTO ", R34_TABLE, " ( row ) VALUES (:row)");
 const R34_GET_ID: &str = concatcp!("SELECT id FROM ", R34_TABLE, " WHERE row = :row");
-const INSERT_INTO_R56_SQL: &str = concatcp!(
-    "INSERT INTO ",
-    R56_TABLE,
-    " ( row ) VALUES (:row)"
-);
+const INSERT_INTO_R56_SQL: &str = concatcp!("INSERT INTO ", R56_TABLE, " ( row ) VALUES (:row)");
 const R56_GET_ID: &str = concatcp!("SELECT id FROM ", R56_TABLE, " WHERE row = :row");
-const INSERT_INTO_R78_SQL: &str = concatcp!(
-    "INSERT INTO ",
-    R78_TABLE,
-    " ( row ) VALUES (:row)"
-);
+const INSERT_INTO_R78_SQL: &str = concatcp!("INSERT INTO ", R78_TABLE, " ( row ) VALUES (:row)");
 const R78_GET_ID: &str = concatcp!("SELECT id FROM ", R78_TABLE, " WHERE row = :row");
 
 const POSITIONS_TABLE: &str = "positions";
@@ -188,35 +172,51 @@ impl Position {
         let r12id = match trans
             .prepare(INSERT_INTO_R12_SQL)
             .expect("prepare r12 insert failed")
-            .execute(named_params! {":row": r12 as i64 }) {
-                Ok(_) => trans.last_insert_rowid(),
-                Err(_) => trans.prepare(R12_GET_ID).expect("prepare failed").query_row([r12 as i64], |row| row.get(0))
-                .expect("query failed")
+            .execute(named_params! {":row": r12 as i64 })
+        {
+            Ok(_) => trans.last_insert_rowid(),
+            Err(_) => trans
+                .prepare(R12_GET_ID)
+                .expect("prepare failed")
+                .query_row([r12 as i64], |row| row.get(0))
+                .expect("query failed"),
         };
 
         let r34id = match trans
             .prepare(INSERT_INTO_R34_SQL)
             .expect("prepare r34 insert failed")
-            .execute(named_params! {":row": r34 as i64 }) {
-                Ok(_) => trans.last_insert_rowid(),
-                Err(_) => trans.prepare(R34_GET_ID).expect("prepare failed").query_row([r34 as i64], |row| row.get(0))
-                .expect("query failed")
+            .execute(named_params! {":row": r34 as i64 })
+        {
+            Ok(_) => trans.last_insert_rowid(),
+            Err(_) => trans
+                .prepare(R34_GET_ID)
+                .expect("prepare failed")
+                .query_row([r34 as i64], |row| row.get(0))
+                .expect("query failed"),
         };
         let r56id = match trans
             .prepare(INSERT_INTO_R56_SQL)
             .expect("prepare r56 insert failed")
-            .execute(named_params! {":row": r56 as i64 }) {
-                Ok(_) => trans.last_insert_rowid(),
-                Err(_) => trans.prepare(R56_GET_ID).expect("prepare failed").query_row([r56 as i64], |row| row.get(0))
-                .expect("query failed")
+            .execute(named_params! {":row": r56 as i64 })
+        {
+            Ok(_) => trans.last_insert_rowid(),
+            Err(_) => trans
+                .prepare(R56_GET_ID)
+                .expect("prepare failed")
+                .query_row([r56 as i64], |row| row.get(0))
+                .expect("query failed"),
         };
         let r78id = match trans
             .prepare(INSERT_INTO_R78_SQL)
             .expect("prepare r78 insert failed")
-            .execute(named_params! {":row": r78 as i64 }) {
-                Ok(_) => trans.last_insert_rowid(),
-                Err(_) => trans.prepare(R78_GET_ID).expect("prepare failed").query_row([r78 as i64], |row| row.get(0))
-                .expect("query failed")
+            .execute(named_params! {":row": r78 as i64 })
+        {
+            Ok(_) => trans.last_insert_rowid(),
+            Err(_) => trans
+                .prepare(R78_GET_ID)
+                .expect("prepare failed")
+                .query_row([r78 as i64], |row| row.get(0))
+                .expect("query failed"),
         };
         println!(
             "will insert into positions: {} {} {} {}",
@@ -227,7 +227,8 @@ impl Position {
             .expect("prepare failed")
             .execute(
                 named_params! {":r12id": r12id, ":r34id": r34id, ":r56id": r56id, ":r78id": r78id },
-            ).expect("insert into position failed");
+            )
+            .expect("insert into position failed");
         trans.commit()
     }
 
