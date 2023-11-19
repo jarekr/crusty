@@ -3,7 +3,7 @@ use colored::*;
 use std::fs;
 use std::path::{Path, PathBuf};
 mod db;
-use db::{Db, Game, GamePosition, Position};
+use db::{Db, Position, GamePosition, Game};
 
 mod parsing;
 use parsing::{BitPosition, GameVisitor};
@@ -29,27 +29,27 @@ fn main() {
     let pgn_file = fs::File::open(&args.config_path).expect("failed to open file");
     let mut reader = BufferedReader::new(pgn_file);
 
-    let mut fenv = GameVisitor::new();
+    let visitor = &mut GameVisitor::new();
+    let iter = reader.into_iter(visitor);
 
-    let result = reader
-        .read_game(&mut fenv)
-        .expect("parsing game failed")
-        .unwrap();
+    for foo in iter {
+        let result = foo.expect("failed to parse pgn");
 
-    let game_id = Game::insert(&db, &result.game).expect("game insert failed");
-    let mut position_ids = Vec::new();
+        let game_id = Game::insert(&db, &result.game).expect("game insert failed");
+        let mut position_ids = Vec::new();
 
-    for gv in result.fens {
-        let (r12, r34, r56, r78) = gv.to_bits();
-        //print_pos(&bp);
-        let pos_id = match Position::insert(&db, r12, r34, r56, r78) {
-            Err(why) => panic!("failed to insert: {}", why),
-            Ok(id) => id,
-        };
-        position_ids.push(pos_id);
+        for gv in result.fens {
+            let (r12, r34, r56, r78) = gv.to_bits();
+            //print_pos(&bp);
+            let pos_id = match Position::insert(&db, r12, r34, r56, r78) {
+                Err(why) => panic!("failed to insert: {}", why),
+                Ok(id) => id,
+            };
+            position_ids.push(pos_id);
+        }
+
+        GamePosition::insert(&db, game_id, position_ids).expect("failed to inser game positions");
     }
-
-    GamePosition::insert(&db, game_id, position_ids).expect("failed to inser game positions");
 
     if args.config_path.ends_with("nevergoingtohappen") {
         bob();
