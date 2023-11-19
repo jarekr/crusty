@@ -22,7 +22,7 @@ use crate::db::Game;
 pub struct GameVisitor {
     pub pos: Chess,
     pub fens: Vec<BitPosition>,
-    pub game: Game
+    pub game: Game,
 }
 
 impl GameVisitor {
@@ -30,7 +30,7 @@ impl GameVisitor {
         GameVisitor {
             pos: Chess::default(),
             fens: Vec::new(),
-            game: Game::new()
+            game: Game::new(),
         }
     }
 }
@@ -43,7 +43,7 @@ impl Visitor for GameVisitor {
     }
 
     fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
-        match(std::str::from_utf8(key)) {
+        match (std::str::from_utf8(key)) {
             Ok(HEADER_EVENT) => self.game.event = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_SITE) => self.game.site = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_DATE) => self.game.date = Some(value.decode_utf8_lossy().to_string()),
@@ -51,22 +51,34 @@ impl Visitor for GameVisitor {
             Ok(HEADER_WHITE) => self.game.white = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_BLACK) => self.game.black = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_RESULT) => self.game.result = Some(value.decode_utf8_lossy().to_string()),
-            Ok(HEADER_CURRENT_POSITION) => self.game.current_position = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_CURRENT_POSITION) => {
+                self.game.current_position = Some(value.decode_utf8_lossy().to_string())
+            }
             Ok(HEADER_TIMEZONE) => self.game.timezone = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_ECO) => self.game.eco = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_ECO_URL) => self.game.eco_url = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_UTC_DATE) => self.game.utc_date = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_UTC_TIME) => self.game.utc_time = Some(value.decode_utf8_lossy().to_string()),
-            Ok(HEADER_WHITE_ELO) => self.game.white_elo = Some(value.decode_utf8_lossy().to_string()),
-            Ok(HEADER_BLACK_ELO) => self.game.black_elo = Some(value.decode_utf8_lossy().to_string()),
-            Ok(HEADER_TIME_CONTROL) => self.game.time_control = Some(value.decode_utf8_lossy().to_string()),
-            Ok(HEADER_TERMINATION) => self.game.termination = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_WHITE_ELO) => {
+                self.game.white_elo = Some(value.decode_utf8_lossy().to_string())
+            }
+            Ok(HEADER_BLACK_ELO) => {
+                self.game.black_elo = Some(value.decode_utf8_lossy().to_string())
+            }
+            Ok(HEADER_TIME_CONTROL) => {
+                self.game.time_control = Some(value.decode_utf8_lossy().to_string())
+            }
+            Ok(HEADER_TERMINATION) => {
+                self.game.termination = Some(value.decode_utf8_lossy().to_string())
+            }
             Ok(HEADER_VARIANT) => self.game.variant = Some(value.decode_utf8_lossy().to_string()),
-            Ok(HEADER_START_TIME) => self.game.start_time = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_START_TIME) => {
+                self.game.start_time = Some(value.decode_utf8_lossy().to_string())
+            }
             Ok(HEADER_END_TIME) => self.game.end_time = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_LINK) => self.game.link = Some(value.decode_utf8_lossy().to_string()),
             Ok(other) => println!("Ignoring other key {}", other),
-            Err(why) => println!("Caught error convertying header key to utf8")
+            Err(why) => println!("Caught error convertying header key to utf8"),
         };
     }
 
@@ -192,7 +204,7 @@ impl PieceInPlay {
         };
         match self.side() {
             Side::Black => c.to_lowercase().next().unwrap(),
-            Side::White => c
+            Side::White => c,
         }
     }
 }
@@ -206,14 +218,13 @@ impl BitPosition {
     pub fn new() -> BitPosition {
         BitPosition {
             board: [
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY,
             ],
         }
     }
