@@ -4,13 +4,33 @@ use std::path::Path;
 
 const GAMES_TABLE: &str = "games";
 const GAMES_DDSQL: &str = concatcp!(
+    //TODO consider using BLOB for pgn text?
     "CREATE TABLE IF NOT EXISTS ",
     GAMES_TABLE,
     " (
-            id       INTEGER PRIMARY KEY,
-            pgn      TEXT,
-            notes    TEXT
-        )"
+        id INTEGER PRIMARY KEY,
+        pgn TEXT,
+        notes TEXT
+        event TEXT,
+        site TEXT,
+        date TEXT,
+        round TEXT,
+        white TEXT,
+        black TEXT,
+        result TEXT,
+        current_position TEXT,
+        timezone TEXT,
+        eco TEXT,
+        eco_url TEXT,
+        utc_date TEXT,
+        utc_time TEXT,
+        white_elo TEXT,
+        black_elo TEXT,
+        time_control TEXT,
+        termination TEXT,
+        start_time TEXT,
+        end_time TEXT,
+        link TEXT)"
 );
 const GET_BY_ID_GAMES_SQL: &str = concatcp!(
     "SELECT * FROM ",
@@ -20,7 +40,48 @@ const GET_BY_ID_GAMES_SQL: &str = concatcp!(
 const INSERT_INTO_GAMES_SQL: &str = concatcp!(
     "INSERT INTO ",
     GAMES_TABLE,
-    " (pgn, notes) VALUES (:pgn, :notes)"
+    "( event,
+       site,
+       date,
+       round,
+       white,
+       black,
+       result,
+       current_position,
+       timezone,
+       eco,
+       eco_url,
+       utc_date,
+       utc_time,
+       white_elo,
+       black_elo,
+       time_control,
+       termination,
+       start_time,
+       end_time,
+       link )
+    VALUES (
+       :event,
+       :site,
+       :date,
+       :round,
+       :white,
+       :black,
+       :result,
+       :current_position,
+       :timezone,
+       :eco,
+       :eco_url,
+       :utc_date,
+       :utc_time,
+       :white_elo,
+       :black_elo,
+       :time_control,
+       :termination,
+       :start_time,
+       :end_time,
+       :link )"
+
 );
 
 const R12_TABLE: &str = "R12";
@@ -60,6 +121,18 @@ const R56_GET_ID: &str = concatcp!("SELECT id FROM ", R56_TABLE, " WHERE row = :
 const INSERT_INTO_R78_SQL: &str = concatcp!("INSERT INTO ", R78_TABLE, " ( row ) VALUES (:row)");
 const R78_GET_ID: &str = concatcp!("SELECT id FROM ", R78_TABLE, " WHERE row = :row");
 
+const GAME_POS_TABLE: &str = "game_positions";
+const GAME_POS_DDSQL: &str = concatcp!(
+    "CREATE TABLE IF NOT EXISTS ",
+    GAME_POS_TABLE,
+    " (
+            id       INTEGER PRIMARY KEY,
+            game_id  INTEGER NOT NULL,
+            pos_id   INTEGER NOT NULL,
+            FOREIGN KEY(game_id) REFERENCES ", GAMES_TABLE, "(id),
+            FOREIGN KEY(pos_id) REFERENCES ", POSITIONS_TABLE, "(id)
+    )"
+);
 const POSITIONS_TABLE: &str = "positions";
 const POSITIONS_DDSQL: &str = concatcp!(
     "CREATE TABLE IF NOT EXISTS ",
@@ -71,10 +144,10 @@ const POSITIONS_DDSQL: &str = concatcp!(
             r56id    INTEGER,
             r78id    INTEGER,
             CONSTRAINT uniq_pos UNIQUE (r12id, r34id, r56id, r78id),
-            FOREIGN KEY(r12id) REFERENCES R12(id),
-            FOREIGN KEY(r34id) REFERENCES R34(id),
-            FOREIGN KEY(r56id) REFERENCES R56(id),
-            FOREIGN KEY(r78id) REFERENCES R78(id)
+            FOREIGN KEY(r12id) REFERENCES ", R12_TABLE, "(id),
+            FOREIGN KEY(r34id) REFERENCES ", R34_TABLE, "(id),
+            FOREIGN KEY(r56id) REFERENCES ", R56_TABLE, "(id),
+            FOREIGN KEY(r78id) REFERENCES ", R78_TABLE, "(id)
       )"
 );
 
@@ -143,6 +216,26 @@ pub struct Game {
     pub id: u32,
     pub pgn: String,
     pub notes: String,
+    pub event: String,
+    pub site: String,
+    pub date: String,
+    pub round: String,
+    pub white: String,
+    pub black: String,
+    pub result: String,
+    pub current_position: String,
+    pub timezone: String,
+    pub eco: String,
+    pub eco_url: String,
+    pub utc_date: String,
+    pub utc_time: String,
+    pub white_elo: String,
+    pub black_elo: String,
+    pub time_control: String,
+    pub termination: String,
+    pub start_time: String,
+    pub end_time: String,
+    pub link: String,
 }
 
 impl Game {
@@ -156,6 +249,26 @@ impl Game {
                 id: row.get(0).unwrap(),
                 pgn: row.get(1).unwrap(),
                 notes: row.get(3).unwrap(),
+                event: row.get(4).unwrap(),
+                site: row.get(5).unwrap(),
+                date: row.get(6).unwrap(),
+                round: row.get(7).unwrap(),
+                white: row.get(8).unwrap(),
+                black: row.get(9).unwrap(),
+                result: row.get(10).unwrap(),
+                current_position: row.get(11).unwrap(),
+                timezone: row.get(12).unwrap(),
+                eco: row.get(13).unwrap(),
+                eco_url: row.get(14).unwrap(),
+                utc_date: row.get(15).unwrap(),
+                utc_time: row.get(16).unwrap(),
+                white_elo: row.get(17).unwrap(),
+                black_elo: row.get(18).unwrap(),
+                time_control: row.get(19).unwrap(),
+                termination: row.get(20).unwrap(),
+                start_time: row.get(21).unwrap(),
+                end_time: row.get(22).unwrap(),
+                link: row.get(23).unwrap(),
             }),
             None => None,
         }

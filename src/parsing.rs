@@ -17,6 +17,8 @@ use pgn_reader::{BufferedReader, RawHeader, SanPlus, Skip, Visitor};
 use shakmaty::bitboard::Bitboard;
 use shakmaty::{CastlingMode, Chess, Piece, Position, Role, Square};
 
+use crate::db;
+
 pub struct FenVisitor {
     pos: Chess,
     fens: Vec<BitPosition>,
