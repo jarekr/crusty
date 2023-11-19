@@ -12,7 +12,7 @@ const GAMES_DDSQL: &str = concatcp!(
     " (
         id INTEGER PRIMARY KEY,
         pgn TEXT,
-        notes TEXT
+        notes TEXT,
         event TEXT,
         site TEXT,
         date TEXT,
