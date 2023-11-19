@@ -70,6 +70,7 @@ const POSITIONS_DDSQL: &str = concatcp!(
             r34id    INTEGER,
             r56id    INTEGER,
             r78id    INTEGER,
+            CONSTRAINT uniq_pos UNIQUE (r12id, r34id, r56id, r78id),
             FOREIGN KEY(r12id) REFERENCES R12(id),
             FOREIGN KEY(r34id) REFERENCES R34(id),
             FOREIGN KEY(r56id) REFERENCES R56(id),
@@ -83,10 +84,15 @@ const INSERT_INTO_POSITIONS_SQL: &str = concatcp!(
     " (r12id, r34id, r56id, r78id) VALUES (:r12id, :r34id, :r56id, :r78id)"
 );
 
+const GET_POS_FOR_IDS_SQL: &str = concatcp!(
+    "SELECT id FROM ",
+    POSITIONS_TABLE,
+    " WHERE r12id = :r12id AND r34id = :r34id AND r56id = :r56id AND r78id = :r78id"
+);
+
 const GET_ALL_POSITIONS_SQL: &str = concatcp!(
     "SELECT id, r12id, r34id, r56id, r78id FROM ",
-    POSITIONS_TABLE,
-    " ORDER BY id"
+    POSITIONS_TABLE
 );
 
 pub struct Db<'a> {
@@ -165,7 +171,7 @@ pub struct Position {
 }
 
 impl Position {
-    pub fn insert(db: &Db, r12: u64, r34: u64, r56: u64, r78: u64) -> Result<(), Error> {
+    pub fn insert(db: &Db, r12: u64, r34: u64, r56: u64, r78: u64) -> Result<i64, Error> {
         let mut conn = db.connect();
         let trans = conn.transaction().expect("error starting transaction");
 
@@ -189,18 +195,21 @@ impl Position {
         let r56id = get_id(INSERT_INTO_R56_SQL, R56_GET_ID, r56);
         let r78id = get_id(INSERT_INTO_R78_SQL, R78_GET_ID, r78);
 
-        println!(
-            "will insert into positions: {} {} {} {}",
-            r12id, r34id, r56id, r78id
-        );
-        trans
+        let pos_id = match trans
             .prepare(INSERT_INTO_POSITIONS_SQL)
             .expect("prepare failed")
-            .execute(
-                named_params! {":r12id": r12id, ":r34id": r34id, ":r56id": r56id, ":r78id": r78id },
-            )
-            .expect("insert into position failed");
-        trans.commit()
+            .execute(named_params! {":r12id": r12id, ":r34id": r34id, ":r56id": r56id, ":r78id": r78id })
+            {
+                Ok(_) => trans.last_insert_rowid(),
+                Err(_) => trans
+                    .prepare(GET_POS_FOR_IDS_SQL)
+                    .expect("prepare failed")
+                    .query_row(named_params! {":r12id": r12id, ":r34id": r34id, ":r56id": r56id, ":r78id": r78id }, |row| row.get(0))
+                    .expect("query failed"),
+            };
+
+        trans.commit().expect("Transaction failed");
+        Ok(pos_id)
     }
 
     pub fn get_all(db: &Db) -> Result<Vec<(u32, u64, u64, u64, u64)>, Error> {
