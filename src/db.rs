@@ -81,7 +81,6 @@ const INSERT_INTO_GAMES_SQL: &str = concatcp!(
        :start_time,
        :end_time,
        :link )"
-
 );
 
 const R12_TABLE: &str = "R12";
@@ -129,8 +128,12 @@ const GAME_POS_DDSQL: &str = concatcp!(
             id       INTEGER PRIMARY KEY,
             game_id  INTEGER NOT NULL,
             pos_id   INTEGER NOT NULL,
-            FOREIGN KEY(game_id) REFERENCES ", GAMES_TABLE, "(id),
-            FOREIGN KEY(pos_id) REFERENCES ", POSITIONS_TABLE, "(id)
+            FOREIGN KEY(game_id) REFERENCES ",
+    GAMES_TABLE,
+    "(id),
+            FOREIGN KEY(pos_id) REFERENCES ",
+    POSITIONS_TABLE,
+    "(id)
     )"
 );
 const POSITIONS_TABLE: &str = "positions";
@@ -144,10 +147,18 @@ const POSITIONS_DDSQL: &str = concatcp!(
             r56id    INTEGER,
             r78id    INTEGER,
             CONSTRAINT uniq_pos UNIQUE (r12id, r34id, r56id, r78id),
-            FOREIGN KEY(r12id) REFERENCES ", R12_TABLE, "(id),
-            FOREIGN KEY(r34id) REFERENCES ", R34_TABLE, "(id),
-            FOREIGN KEY(r56id) REFERENCES ", R56_TABLE, "(id),
-            FOREIGN KEY(r78id) REFERENCES ", R78_TABLE, "(id)
+            FOREIGN KEY(r12id) REFERENCES ",
+    R12_TABLE,
+    "(id),
+            FOREIGN KEY(r34id) REFERENCES ",
+    R34_TABLE,
+    "(id),
+            FOREIGN KEY(r56id) REFERENCES ",
+    R56_TABLE,
+    "(id),
+            FOREIGN KEY(r78id) REFERENCES ",
+    R78_TABLE,
+    "(id)
       )"
 );
 
