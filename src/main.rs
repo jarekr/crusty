@@ -3,7 +3,7 @@ use colored::*;
 use std::fs;
 use std::path::{Path, PathBuf};
 mod db;
-use db::{Db, Position};
+use db::{Db, Game, GamePosition, Position};
 
 mod parsing;
 use parsing::{BitPosition, GameVisitor};
@@ -21,6 +21,11 @@ fn main() {
         "called with arg : {}",
         args.config_path.display().to_string().green()
     );
+
+    let dbpath = Path::new("data.db");
+    let db = Db::new(dbpath);
+    db.init_schema();
+
     let pgn_file = fs::File::open(&args.config_path).expect("failed to open file");
     let mut reader = BufferedReader::new(pgn_file);
 
@@ -31,9 +36,9 @@ fn main() {
         .expect("parsing game failed")
         .unwrap();
 
-    let dbpath = Path::new("data.db");
-    let db = Db::new(dbpath);
-    db.init_schema();
+    let game_id = Game::insert(&db, &result.game).expect("game insert failed");
+    let mut position_ids = Vec::new();
+
     for gv in result.fens {
         let (r12, r34, r56, r78) = gv.to_bits();
         //print_pos(&bp);
@@ -41,8 +46,12 @@ fn main() {
             Err(why) => panic!("failed to insert: {}", why),
             Ok(id) => id,
         };
+        position_ids.push(pos_id);
     }
-    if args.config_path.ends_with("child") {
+
+    GamePosition::insert(&db, game_id, position_ids).expect("failed to inser game positions");
+
+    if args.config_path.ends_with("nevergoingtohappen") {
         bob();
     }
 }

@@ -140,6 +140,8 @@ const GAME_POS_DDSQL: &str = concatcp!(
             id       INTEGER PRIMARY KEY,
             game_id  INTEGER NOT NULL,
             pos_id   INTEGER NOT NULL,
+            turn     INTEGER NOT NULL,
+            CONSTRAINT uniq_game_pos UNIQUE (game_id, pos_id, turn),
             FOREIGN KEY(game_id) REFERENCES ",
     GAMES_TABLE,
     "(id),
@@ -148,6 +150,12 @@ const GAME_POS_DDSQL: &str = concatcp!(
     "(id)
     )"
 );
+const INSERT_GAMES_POS_SQL: &str = concatcp!(
+    "INSERT INTO ",
+    GAME_POS_TABLE,
+    " ( game_id, pos_id, turn ) VALUES ( :game_id, :pos_id, :turn )"
+);
+
 const POSITIONS_TABLE: &str = "positions";
 const POSITIONS_DDSQL: &str = concatcp!(
     "CREATE TABLE IF NOT EXISTS ",
@@ -222,6 +230,7 @@ impl Db<'_> {
             R56_DDSQL,
             R78_DDSQL,
             POSITIONS_DDSQL,
+            GAME_POS_DDSQL,
         ] {
             self.create_schema(&conn, sql);
         }
@@ -236,7 +245,7 @@ impl Db<'_> {
 }
 
 pub struct Game {
-    pub id: u32,
+    pub id: i64,
     pub pgn: Option<String>,
     pub notes: Option<String>,
     pub event: Option<String>,
@@ -293,11 +302,11 @@ impl Game {
             link: None,
         }
     }
-    pub fn insert(db: &Db, game: &Game) -> Result<usize, Error> {
+    pub fn insert(db: &Db, game: &Game) -> Result<i64, Error> {
         //let mut comped = lzma::compress(pgn.as_bytes());
         let conn = db.connect();
         let mut stmt = conn.prepare(INSERT_INTO_GAMES_SQL).expect("prepare failed");
-        stmt.execute(named_params! { ":pgn": game.pgn, ":notes": game.notes, ":event": game.event, ":site": game.site,
+        stmt.insert(named_params! { ":pgn": game.pgn, ":notes": game.notes, ":event": game.event, ":site": game.site,
         ":date": game.date, ":round": game.round, ":white": game.white, ":black": game.black, ":result": game.result,
         ":current_position": game.current_position, ":timezone": game.timezone, ":eco": game.eco, ":eco_url": game.eco_url,
         ":opening": game.opening, ":utc_date": game.utc_date, ":utc_time": game.utc_time, ":white_elo": game.white_elo,
@@ -343,7 +352,7 @@ impl Game {
 }
 
 pub struct Position {
-    pub id: u32,
+    pub id: i64,
     pub r12: u64,
     pub r34: u64,
     pub r56: u64,
@@ -359,9 +368,9 @@ impl Position {
             match trans
                 .prepare(insert_sql)
                 .expect("prepare r12 insert failed")
-                .execute(named_params! {":row": v as i64 })
+                .insert(named_params! {":row": v as i64 })
             {
-                Ok(_) => trans.last_insert_rowid(),
+                Ok(id) => id,
                 Err(_) => trans
                     .prepare(get_sql)
                     .expect("prepare failed")
@@ -378,9 +387,9 @@ impl Position {
         let pos_id = match trans
             .prepare(INSERT_INTO_POSITIONS_SQL)
             .expect("prepare failed")
-            .execute(named_params! {":r12id": r12id, ":r34id": r34id, ":r56id": r56id, ":r78id": r78id })
+            .insert(named_params! {":r12id": r12id, ":r34id": r34id, ":r56id": r56id, ":r78id": r78id })
             {
-                Ok(_) => trans.last_insert_rowid(),
+                Ok(id) => id,
                 Err(_) => trans
                     .prepare(GET_POS_FOR_IDS_SQL)
                     .expect("prepare failed")
@@ -403,5 +412,27 @@ impl Position {
         })
         .unwrap()
         .collect()
+    }
+}
+
+pub struct GamePosition {
+    pub id: i64,
+    pub game_id: i64,
+    pub pos_id: i64,
+    pub turn: u16,
+}
+
+impl GamePosition {
+    pub fn insert(db: &Db, game_id: i64, position_ids: Vec<i64>) -> Result<(), Error> {
+        let mut conn = db.connect();
+        let trans = conn.transaction().expect("failed to start transaction");
+        for (turn, pos_id) in position_ids.iter().enumerate() {
+            trans
+                .prepare(INSERT_GAMES_POS_SQL)
+                .expect("prepare failed")
+                .insert(named_params! {":game_id": game_id, ":pos_id": pos_id, ":turn": turn})
+                .expect("insert failed");
+        }
+        trans.commit()
     }
 }
