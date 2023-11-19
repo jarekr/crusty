@@ -17,27 +17,57 @@ use pgn_reader::{BufferedReader, RawHeader, SanPlus, Skip, Visitor};
 use shakmaty::bitboard::Bitboard;
 use shakmaty::{CastlingMode, Chess, Piece, Position, Role, Square};
 
-use crate::db;
+use crate::db::Game;
 
-pub struct FenVisitor {
-    pos: Chess,
-    fens: Vec<BitPosition>,
+pub struct GameVisitor {
+    pub pos: Chess,
+    pub fens: Vec<BitPosition>,
+    pub game: Game
 }
 
-impl FenVisitor {
-    pub fn new() -> FenVisitor {
-        FenVisitor {
+impl GameVisitor {
+    pub fn new() -> GameVisitor {
+        GameVisitor {
             pos: Chess::default(),
             fens: Vec::new(),
+            game: Game::new()
         }
     }
 }
 
-impl Visitor for FenVisitor {
-    type Result = Vec<BitPosition>;
+impl Visitor for GameVisitor {
+    type Result = GameVisitor;
 
     fn begin_variation(&mut self) -> Skip {
         Skip(true) // stay in the mainline
+    }
+
+    fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
+        match(std::str::from_utf8(key)) {
+            Ok(HEADER_EVENT) => self.game.event = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_SITE) => self.game.site = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_DATE) => self.game.date = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_ROUND) => self.game.round = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_WHITE) => self.game.white = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_BLACK) => self.game.black = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_RESULT) => self.game.result = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_CURRENT_POSITION) => self.game.current_position = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_TIMEZONE) => self.game.timezone = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_ECO) => self.game.eco = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_ECO_URL) => self.game.eco_url = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_UTC_DATE) => self.game.utc_date = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_UTC_TIME) => self.game.utc_time = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_WHITE_ELO) => self.game.white_elo = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_BLACK_ELO) => self.game.black_elo = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_TIME_CONTROL) => self.game.time_control = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_TERMINATION) => self.game.termination = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_VARIANT) => self.game.variant = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_START_TIME) => self.game.start_time = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_END_TIME) => self.game.end_time = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_LINK) => self.game.link = Some(value.decode_utf8_lossy().to_string()),
+            Ok(other) => println!("Ignoring other key {}", other),
+            Err(why) => println!("Caught error convertying header key to utf8")
+        };
     }
 
     fn san(&mut self, san_plus: SanPlus) {
@@ -100,7 +130,7 @@ impl Visitor for FenVisitor {
     }
 
     fn end_game(&mut self) -> Self::Result {
-        ::std::mem::replace(&mut self.fens, Vec::new())
+        ::std::mem::replace(self, GameVisitor::new())
     }
 }
 
@@ -150,10 +180,6 @@ pub struct PieceInPlay {
 }
 
 impl PieceInPlay {
-    pub fn news(p: BitPiece, s: Side) -> PieceInPlay {
-        PieceInPlay::new(p, s)
-    }
-
     pub fn to_char(&self) -> char {
         let mut c = match self.piece() {
             BitPiece::Pawn => WHITE_PAWN_C,
@@ -164,10 +190,10 @@ impl PieceInPlay {
             BitPiece::Empty => '_',
             BitPiece::Knight => WHITE_KNIGHT_C,
         };
-        if self.side() == Side::Black {
-            c = c.to_lowercase().next().unwrap();
+        match self.side() {
+            Side::Black => c.to_lowercase().next().unwrap(),
+            Side::White => c
         }
-        c
     }
 }
 
@@ -180,13 +206,14 @@ impl BitPosition {
     pub fn new() -> BitPosition {
         BitPosition {
             board: [
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
-                &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
+                &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY, &EMPTY,
             ],
         }
     }
@@ -309,6 +336,29 @@ pub const BLACK_BISHOP_C: char = 'b';
 pub const BLACK_QUEEN_C: char = 'q';
 pub const BLACK_KING_C: char = 'k';
 pub const BLACK_PAWN_C: char = 'p';
+
+//pub const HEADER_
+pub const HEADER_EVENT: &str = "Event";
+pub const HEADER_SITE: &str = "Site";
+pub const HEADER_DATE: &str = "Date";
+pub const HEADER_ROUND: &str = "Round";
+pub const HEADER_WHITE: &str = "White";
+pub const HEADER_BLACK: &str = "Black";
+pub const HEADER_RESULT: &str = "Result";
+pub const HEADER_CURRENT_POSITION: &str = "CurrentPosition";
+pub const HEADER_TIMEZONE: &str = "Timezone";
+pub const HEADER_ECO: &str = "ECO";
+pub const HEADER_ECO_URL: &str = "ECOUrl";
+pub const HEADER_UTC_DATE: &str = "UTCDate";
+pub const HEADER_UTC_TIME: &str = "UTCTime";
+pub const HEADER_WHITE_ELO: &str = "WhiteElo";
+pub const HEADER_BLACK_ELO: &str = "BlackElo";
+pub const HEADER_TIME_CONTROL: &str = "TimeControl";
+pub const HEADER_TERMINATION: &str = "Termination";
+pub const HEADER_VARIANT: &str = "Variant";
+pub const HEADER_START_TIME: &str = "StartTime";
+pub const HEADER_END_TIME: &str = "EndTime";
+pub const HEADER_LINK: &str = "Link";
 
 pub static WHITE_ROOK: Lazy<PieceInPlay> =
     Lazy::new(|| PieceInPlay::new(BitPiece::Rook, Side::White));

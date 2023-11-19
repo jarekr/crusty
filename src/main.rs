@@ -6,7 +6,7 @@ mod db;
 use db::{Db, Position};
 
 mod parsing;
-use parsing::{BitPosition, FenVisitor};
+use parsing::{BitPosition, GameVisitor};
 
 #[derive(Parser)]
 struct Args {
@@ -24,7 +24,8 @@ fn main() {
     let pgn_file = fs::File::open(&args.config_path).expect("failed to open file");
     let mut reader = BufferedReader::new(pgn_file);
 
-    let mut fenv = FenVisitor::new();
+    let mut fenv = GameVisitor::new();
+
     let result = reader
         .read_game(&mut fenv)
         .expect("parsing game failed")
@@ -33,8 +34,8 @@ fn main() {
     let dbpath = Path::new("data.db");
     let db = Db::new(dbpath);
     db.init_schema();
-    for bp in result {
-        let (r12, r34, r56, r78) = bp.to_bits();
+    for gv in result.fens {
+        let (r12, r34, r56, r78) = gv.to_bits();
         //print_pos(&bp);
         let pos_id = match Position::insert(&db, r12, r34, r56, r78) {
             Err(why) => panic!("failed to insert: {}", why),
