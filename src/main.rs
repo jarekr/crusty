@@ -3,7 +3,7 @@ use colored::*;
 use std::fs;
 use std::path::{Path, PathBuf};
 mod db;
-use db::{Db, Position, GamePosition, Game};
+use db::{Db, Game, GamePosition, Position};
 
 mod parsing;
 use parsing::{BitPosition, GameVisitor};
@@ -27,13 +27,19 @@ fn main() {
     db.init_schema();
 
     let pgn_file = fs::File::open(&args.config_path).expect("failed to open file");
-    let mut reader = BufferedReader::new(pgn_file);
+    let reader = BufferedReader::new(pgn_file);
 
     let visitor = &mut GameVisitor::new();
     let iter = reader.into_iter(visitor);
 
+    let mut count = 0;
     for foo in iter {
+        count += 1;
         let result = foo.expect("failed to parse pgn");
+        println!(
+            "parsed {: >6} {} {}",
+            count, result.game.event, result.game.site
+        );
 
         let game_id = Game::insert(&db, &result.game).expect("game insert failed");
         let mut position_ids = Vec::new();

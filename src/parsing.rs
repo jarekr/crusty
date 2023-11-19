@@ -1,3 +1,4 @@
+use bilge::arbitrary_int::Number;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
 
@@ -44,8 +45,8 @@ impl Visitor for GameVisitor {
 
     fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
         match (std::str::from_utf8(key)) {
-            Ok(HEADER_EVENT) => self.game.event = Some(value.decode_utf8_lossy().to_string()),
-            Ok(HEADER_SITE) => self.game.site = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_EVENT) => self.game.event = value.decode_utf8_lossy().to_string(),
+            Ok(HEADER_SITE) => self.game.site = value.decode_utf8_lossy().to_string(),
             Ok(HEADER_DATE) => self.game.date = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_ROUND) => self.game.round = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_WHITE) => self.game.white = Some(value.decode_utf8_lossy().to_string()),
@@ -77,6 +78,7 @@ impl Visitor for GameVisitor {
             }
             Ok(HEADER_END_TIME) => self.game.end_time = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_LINK) => self.game.link = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_OPENING) => self.game.opening = Some(value.decode_utf8_lossy().to_string()),
             Ok(other) => println!("Ignoring other key {}", other),
             Err(why) => println!("Caught error convertying header key to utf8"),
         };
@@ -370,6 +372,7 @@ pub const HEADER_VARIANT: &str = "Variant";
 pub const HEADER_START_TIME: &str = "StartTime";
 pub const HEADER_END_TIME: &str = "EndTime";
 pub const HEADER_LINK: &str = "Link";
+pub const HEADER_OPENING: &str = "Opening";
 
 pub static WHITE_ROOK: Lazy<PieceInPlay> =
     Lazy::new(|| PieceInPlay::new(BitPiece::Rook, Side::White));
