@@ -1,6 +1,8 @@
 use const_format::concatcp;
-use rusqlite::{named_params, Connection, Error, OpenFlags, Transaction};
+use rusqlite::{named_params, Connection, Error, OpenFlags};
 use std::path::Path;
+
+use lzma;
 
 const GAMES_TABLE: &str = "games";
 const GAMES_DDSQL: &str = concatcp!(
@@ -28,6 +30,7 @@ const GAMES_DDSQL: &str = concatcp!(
         black_elo TEXT,
         time_control TEXT,
         termination TEXT,
+        variant TEXT,
         start_time TEXT,
         end_time TEXT,
         link TEXT)"
@@ -40,7 +43,9 @@ const GET_BY_ID_GAMES_SQL: &str = concatcp!(
 const INSERT_INTO_GAMES_SQL: &str = concatcp!(
     "INSERT INTO ",
     GAMES_TABLE,
-    "( event,
+    "( pgn,
+       notes,
+       event,
        site,
        date,
        round,
@@ -57,10 +62,13 @@ const INSERT_INTO_GAMES_SQL: &str = concatcp!(
        black_elo,
        time_control,
        termination,
+       variant,
        start_time,
        end_time,
        link )
     VALUES (
+       :pgn,
+       :notes,
        :event,
        :site,
        :date,
@@ -78,6 +86,7 @@ const INSERT_INTO_GAMES_SQL: &str = concatcp!(
        :black_elo,
        :time_control,
        :termination,
+       :variant,
        :start_time,
        :end_time,
        :link )"
@@ -244,12 +253,42 @@ pub struct Game {
     pub black_elo: String,
     pub time_control: String,
     pub termination: String,
+    pub variant: String,
     pub start_time: String,
     pub end_time: String,
     pub link: String,
 }
 
 impl Game {
+    pub fn insert(db: &Db, game: &Game) -> Result<usize, Error> {
+        //let mut comped = lzma::compress(pgn.as_bytes());
+        let conn = db.connect();
+        let mut stmt = conn.prepare(INSERT_INTO_GAMES_SQL).expect("prepare failed");
+        stmt.execute(named_params! {
+         ":pgn": game.pgn,
+         ":notes": game.notes,
+         ":event": game.event,
+         ":site": game.site,
+         ":date": game.date,
+         ":round": game.round,
+         ":white": game.white,
+         ":black": game.black,
+         ":result": game.result,
+         ":current_position": game.current_position,
+         ":timezone": game.timezone,
+         ":eco": game.eco,
+         ":eco_url": game.eco_url,
+         ":utc_date": game.utc_date,
+         ":utc_time": game.utc_time,
+         ":white_elo": game.white_elo,
+         ":black_elo": game.black_elo,
+         ":time_control": game.time_control,
+         ":termination": game.termination,
+         ":variant": game.variant,
+         ":start_time": game.start_time,
+         ":end_time": game.end_time,
+         ":link":  game.link})
+    }
     pub fn query_by_id(db: &Db, id: u32) -> Option<Game> {
         let conn = db.connect();
         let mut stmt = conn.prepare(GET_BY_ID_GAMES_SQL).expect("prepare failed");
@@ -277,9 +316,10 @@ impl Game {
                 black_elo: row.get(18).unwrap(),
                 time_control: row.get(19).unwrap(),
                 termination: row.get(20).unwrap(),
-                start_time: row.get(21).unwrap(),
-                end_time: row.get(22).unwrap(),
-                link: row.get(23).unwrap(),
+                variant: row.get(21).unwrap(),
+                start_time: row.get(22).unwrap(),
+                end_time: row.get(23).unwrap(),
+                link: row.get(24).unwrap(),
             }),
             None => None,
         }
