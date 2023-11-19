@@ -264,30 +264,12 @@ impl Game {
         //let mut comped = lzma::compress(pgn.as_bytes());
         let conn = db.connect();
         let mut stmt = conn.prepare(INSERT_INTO_GAMES_SQL).expect("prepare failed");
-        stmt.execute(named_params! {
-         ":pgn": game.pgn,
-         ":notes": game.notes,
-         ":event": game.event,
-         ":site": game.site,
-         ":date": game.date,
-         ":round": game.round,
-         ":white": game.white,
-         ":black": game.black,
-         ":result": game.result,
-         ":current_position": game.current_position,
-         ":timezone": game.timezone,
-         ":eco": game.eco,
-         ":eco_url": game.eco_url,
-         ":utc_date": game.utc_date,
-         ":utc_time": game.utc_time,
-         ":white_elo": game.white_elo,
-         ":black_elo": game.black_elo,
-         ":time_control": game.time_control,
-         ":termination": game.termination,
-         ":variant": game.variant,
-         ":start_time": game.start_time,
-         ":end_time": game.end_time,
-         ":link":  game.link})
+        stmt.execute(named_params! { ":pgn": game.pgn, ":notes": game.notes, ":event": game.event, ":site": game.site,
+        ":date": game.date, ":round": game.round, ":white": game.white, ":black": game.black, ":result": game.result,
+        ":current_position": game.current_position, ":timezone": game.timezone, ":eco": game.eco, ":eco_url": game.eco_url,
+        ":utc_date": game.utc_date, ":utc_time": game.utc_time, ":white_elo": game.white_elo, ":black_elo": game.black_elo,
+        ":time_control": game.time_control, ":termination": game.termination, ":variant": game.variant,
+        ":start_time": game.start_time, ":end_time": game.end_time, ":link":  game.link})
     }
     pub fn query_by_id(db: &Db, id: u32) -> Option<Game> {
         let conn = db.connect();

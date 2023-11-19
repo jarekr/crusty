@@ -21,8 +21,8 @@ fn main() {
         "called with arg : {}",
         args.config_path.display().to_string().green()
     );
-    let contents = fs::read_to_string(&args.config_path).expect("foo");
-    let mut reader = BufferedReader::new_cursor(contents.into_bytes());
+    let pgn_file = fs::File::open(&args.config_path).expect("failed to open file");
+    let mut reader = BufferedReader::new(pgn_file);
 
     let mut fenv = FenVisitor::new();
     let result = reader
@@ -36,9 +36,9 @@ fn main() {
     for bp in result {
         let (r12, r34, r56, r78) = bp.to_bits();
         //print_pos(&bp);
-        match Position::insert(&db, r12, r34, r56, r78) {
+        let pos_id = match Position::insert(&db, r12, r34, r56, r78) {
             Err(why) => panic!("failed to insert: {}", why),
-            Ok(_) => (),
+            Ok(id) => id,
         };
     }
     if args.config_path.ends_with("child") {
