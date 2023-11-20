@@ -1,9 +1,12 @@
 use clap::Parser;
 use colored::*;
 use std::fs;
+use std::io;
 use std::path::{Path, PathBuf};
 mod db;
 use db::{Db, Game, GamePosition, Position};
+
+use std::collections::{ HashMap, HashSet};
 
 mod parsing;
 use parsing::{BitPosition, GameVisitor};
@@ -32,30 +35,71 @@ fn main() {
     let visitor = &mut GameVisitor::new();
     let iter = reader.into_iter(visitor);
 
-    let mut count = 0;
-    for foo in iter {
-        count += 1;
-        let result = foo.expect("failed to parse pgn");
-        println!(
-            "parsed {: >6} {} {}",
-            count, result.game.event, result.game.site
-        );
+    let mut game_count: i64 = 0;
+    let mut pos_id: u64 = 0;
+    let mut position_ids = Vec::new();
 
-        let game_id = Game::insert(&db, &result.game).expect("game insert failed");
-        let mut position_ids = Vec::new();
+    let mut r12hm: HashMap<u64, u64> = HashMap::new();
+    let mut r34hm: HashMap<u64, u64> = HashMap::new();
+    let mut r56hm: HashMap<u64, u64> = HashMap::new();
+    let mut r78hm: HashMap<u64, u64> = HashMap::new();
+
+    let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::new();
+
+    for foo in iter {
+        game_count += 1;
+        let result = foo.expect("failed to parse pgn");
+
+        //let game_id = Game::insert(&db, &result.game).expect("game insert failed");
 
         for gv in result.fens {
             let (r12, r34, r56, r78) = gv.to_bits();
             //print_pos(&bp);
-            let pos_id = match Position::insert(&db, r12, r34, r56, r78) {
-                Err(why) => panic!("failed to insert: {}", why),
-                Ok(id) => id,
-            };
+            //let pos_id = match Position::insert(&db, r12, r34, r56, r78) {
+            //    Err(why) => panic!("failed to insert: {}", why),
+            //    Ok(id) => id,
+            //};
             position_ids.push(pos_id);
+
+            let r12id = match r12hm.insert(r12, pos_id) {
+                Some(id) => id,
+                None => pos_id,
+            };
+            let r34id = match r34hm.insert(r34, pos_id) {
+                Some(id) => id,
+                None => pos_id,
+            };
+            let r56id = match r56hm.insert(r56, pos_id) {
+                Some(id) => id,
+                None => pos_id,
+            };
+            let r78id = match  r78hm.insert(r78, pos_id) {
+                Some(id) => id,
+                None => pos_id,
+
+            };
+            positions.insert((r12id, r34id, r56id, r78id));
+            pos_id += 1;
         }
 
-        GamePosition::insert(&db, game_id, position_ids).expect("failed to inser game positions");
+        //GamePosition::insert(&db, game_id, position_ids).expect("failed to inser game positions");
+
+        if game_count % 1000 == 0 {
+            println!(
+                "games {: >6}\n  positions parsed {}\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
+                game_count, position_ids.len(), positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+        }
+
     }
+
+    let mut input = String::new();
+    println!("-- stats --");
+    println!(
+        "games {: >6}\n  positions parsed {}\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
+        game_count, position_ids.len(), positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+
+    io::stdin().read_line(&mut input).expect("error: unable to read user input");
+    println!("You inputttedddd: {}", input);
 
     if args.config_path.ends_with("nevergoingtohappen") {
         bob();
