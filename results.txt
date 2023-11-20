@@ -1,0 +1,9 @@
+games 11899000
+  positions parsed 788849482
+    duration 1101.84 sec, 10799.25 games/s
+    positions 0
+    r12=15346548
+    r34=46628857
+    r56=49825811
+    r78=18123114
+

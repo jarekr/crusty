@@ -41,16 +41,18 @@ fn main() {
     let mut pos_id: u64 = 1;
     let mut position_ids = Vec::new();
 
-    let mut r12hm: HashMap<u64, u64> = HashMap::new();
-    let mut r34hm: HashMap<u64, u64> = HashMap::new();
-    let mut r56hm: HashMap<u64, u64> = HashMap::new();
-    let mut r78hm: HashMap<u64, u64> = HashMap::new();
+    let million = 10usize.pow(6);
+    let mut r12hm: HashMap<u64, u64> = HashMap::with_capacity(25 * million);
+    let mut r34hm: HashMap<u64, u64> = HashMap::with_capacity(60 * million);
+    let mut r56hm: HashMap<u64, u64> = HashMap::with_capacity(60 * million);
+    let mut r78hm: HashMap<u64, u64> = HashMap::with_capacity(25 * million);
     let mut r12id_latest: u64 = 1;
     let mut r34id_latest: u64 = 1;
     let mut r56id_latest: u64 = 1;
     let mut r78id_latest: u64 = 1;
 
-    let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::new();
+    let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(100 * million);
+    let mut positions2: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(100 * million);
 
     let start_time = Instant::now();
 
@@ -111,10 +113,10 @@ fn main() {
         "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
         game_count - 1, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
 
-    //io::stdin()
-    //    .read_line(&mut input)
-    //    .expect("error: unable to read user input");
-    //println!("You inputttedddd: {}", input);
+    io::stdin()
+        .read_line(&mut input)
+        .expect("error: unable to read user input");
+    println!("You inputttedddd: {}", input);
 
     if args.config_path.ends_with("nevergoingtohappen") {
         bob();
