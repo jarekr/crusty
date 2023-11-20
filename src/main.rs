@@ -37,21 +37,24 @@ fn main() {
     let visitor = &mut GameVisitor::new();
     let iter = reader.into_iter(visitor);
 
-    let mut game_count: u64 = 0;
-    let mut pos_id: u64 = 0;
+    let mut game_count: u64 = 1;
+    let mut pos_id: u64 = 1;
     let mut position_ids = Vec::new();
 
     let mut r12hm: HashMap<u64, u64> = HashMap::new();
     let mut r34hm: HashMap<u64, u64> = HashMap::new();
     let mut r56hm: HashMap<u64, u64> = HashMap::new();
     let mut r78hm: HashMap<u64, u64> = HashMap::new();
+    let mut r12id_latest: u64 = 1;
+    let mut r34id_latest: u64 = 1;
+    let mut r56id_latest: u64 = 1;
+    let mut r78id_latest: u64 = 1;
 
     let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::new();
 
     let start_time = Instant::now();
 
     for foo in iter {
-        game_count += 1;
         let result = foo.expect("failed to parse pgn");
 
         //let game_id = Game::insert(&db, &result.game).expect("game insert failed");
@@ -65,23 +68,26 @@ fn main() {
             //};
             position_ids.push(pos_id);
 
-            let r12id = match r12hm.insert(r12, pos_id) {
+            let r12id = match r12hm.get(&r12) {
                 Some(id) => id,
-                None => pos_id,
+                None => { r12hm.insert(r12, r12id_latest); r12id_latest += 1; r12hm.get(&r12).unwrap() },
             };
-            let r34id = match r34hm.insert(r34, pos_id) {
+            let r34id = match r34hm.get(&r34) {
                 Some(id) => id,
-                None => pos_id,
+                None => { r34hm.insert(r34, r34id_latest); r34id_latest += 1; r34hm.get(&r34).unwrap() },
             };
-            let r56id = match r56hm.insert(r56, pos_id) {
+            let r56id = match r56hm.get(&r56) {
                 Some(id) => id,
-                None => pos_id,
+                None => { r56hm.insert(r56, r56id_latest); r56id_latest += 1; r56hm.get(&r56).unwrap() },
             };
-            let r78id = match r78hm.insert(r78, pos_id) {
+            let r78id = match r78hm.get(&r78) {
                 Some(id) => id,
-                None => pos_id,
+                None => { r78hm.insert(r78, r78id_latest); r78id_latest += 1; r78hm.get(&r78).unwrap() },
             };
-            positions.insert((r12id, r34id, r56id, r78id));
+
+
+            //println!("Inserting position {} {} {} {} ({}, {}, {}, {})", *r12id, *r34id, *r56id, *r78id, r12, r34, r56, r78);
+            positions.insert((*r12id, *r34id, *r56id, *r78id));
             pos_id += 1;
         }
 
@@ -94,20 +100,21 @@ fn main() {
                 "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
                 game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
         }
+        game_count += 1;
     }
 
     let mut input = String::new();
     println!("-- stats --");
     let duration = start_time.elapsed().as_secs_f64();
-    let games_per_sec = game_count as f64 / duration;
+    let games_per_sec = (game_count - 1) as f64 / duration;
     println!(
-        "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {: >.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
-        game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+        "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
+        game_count - 1, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
 
-    io::stdin()
-        .read_line(&mut input)
-        .expect("error: unable to read user input");
-    println!("You inputttedddd: {}", input);
+    //io::stdin()
+    //    .read_line(&mut input)
+    //    .expect("error: unable to read user input");
+    //println!("You inputttedddd: {}", input);
 
     if args.config_path.ends_with("nevergoingtohappen") {
         bob();
