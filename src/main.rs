@@ -7,6 +7,8 @@ mod db;
 use db::{Db, Game, GamePosition, Position};
 
 use std::time::{Duration, Instant};
+use std::fs::File;
+use std::io::prelude::*;
 
 use std::collections::{HashMap, HashSet};
 use std::collections::btree_map::BTreeMap;
@@ -100,7 +102,11 @@ fn main() {
                 "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
                 game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
         }
+
         game_count += 1;
+        if game_count > 2_000_000 {
+            break;
+        }
     }
 
     let mut input = String::new();
@@ -111,6 +117,41 @@ fn main() {
         "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
         game_count - 1, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
 
+    for bt in [&r12hm, &r34hm, &r56hm, &r78hm] {
+        println!("first : {}", bt.first_key_value().unwrap().0);
+        println!("last:   {}", bt.last_key_value().unwrap().0);
+        println!("size:   {}", bt.len());
+    }
+
+    println!("writing r12 file");
+    let mut r12file = File::create("r12.db").expect("failed to create r12db");
+    for (count, value) in r12hm.keys().enumerate() {
+        r12file.write_all(&value.to_be_bytes()).expect("Write failed!");
+    }
+    drop(r12file);
+
+    println!("writing r34 file");
+    let mut r34file = File::create("r34.db").expect("failed to create r34db");
+    for (count, value) in r34hm.keys().enumerate() {
+        r34file.write_all(&value.to_be_bytes()).expect("Write failed!");
+    }
+    drop(r34file);
+
+    println!("writing r56 file");
+    let mut r56file = File::create("r56.db").expect("failed to create r56db");
+    for (count, value) in r56hm.keys().enumerate() {
+        r56file.write_all(&value.to_be_bytes()).expect("Write failed!");
+    }
+    drop(r56file);
+
+    println!("writing r78 file");
+    let mut r78file = File::create("r78.db").expect("failed to create r78db");
+    for (count, value) in r78hm.keys().enumerate() {
+        r78file.write_all(&value.to_be_bytes()).expect("Write failed!");
+    }
+    drop(r78file);
+
+    println!("press enter to continue....");
     io::stdin()
         .read_line(&mut input)
         .expect("error: unable to read user input");
