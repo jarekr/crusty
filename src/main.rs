@@ -6,9 +6,9 @@ use std::path::{Path, PathBuf};
 mod db;
 use db::{Db, Game, GamePosition, Position};
 
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
-use std::collections::{ HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 mod parsing;
 use parsing::{BitPosition, GameVisitor};
@@ -77,10 +77,9 @@ fn main() {
                 Some(id) => id,
                 None => pos_id,
             };
-            let r78id = match  r78hm.insert(r78, pos_id) {
+            let r78id = match r78hm.insert(r78, pos_id) {
                 Some(id) => id,
                 None => pos_id,
-
             };
             positions.insert((r12id, r34id, r56id, r78id));
             pos_id += 1;
@@ -95,7 +94,6 @@ fn main() {
                 "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
                 game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
         }
-
     }
 
     let mut input = String::new();
@@ -106,7 +104,9 @@ fn main() {
         "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {: >.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
         game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
 
-    io::stdin().read_line(&mut input).expect("error: unable to read user input");
+    io::stdin()
+        .read_line(&mut input)
+        .expect("error: unable to read user input");
     println!("You inputttedddd: {}", input);
 
     if args.config_path.ends_with("nevergoingtohappen") {
