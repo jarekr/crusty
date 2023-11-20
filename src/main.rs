@@ -92,7 +92,7 @@ fn main() {
             let duration = start_time.elapsed().as_secs_f64();
             let games_per_sec = game_count as f64 / duration;
             println!(
-                "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
+                "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
                 game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
         }
 
@@ -103,7 +103,7 @@ fn main() {
     let duration = start_time.elapsed().as_secs_f64();
     let games_per_sec = game_count as f64 / duration;
     println!(
-        "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
+        "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {: >.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
         game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
 
     io::stdin().read_line(&mut input).expect("error: unable to read user input");
