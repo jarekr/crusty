@@ -89,19 +89,22 @@ fn main() {
         //GamePosition::insert(&db, game_id, position_ids).expect("failed to inser game positions");
 
         if game_count % 1000 == 0 {
-            let duration: Duration = start_time.elapsed();
+            let duration = start_time.elapsed().as_secs();
+            let games_per_sec = game_count / duration;
             println!(
                 "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
-                game_count, position_ids.len(), duration.as_secs(), (game_count / duration.as_secs()), positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+                game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
         }
 
     }
 
     let mut input = String::new();
     println!("-- stats --");
+    let duration = start_time.elapsed().as_secs();
+    let games_per_sec = game_count / duration;
     println!(
         "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
-        game_count, position_ids.len(), duration.as_secs(), (game_count / duration.as_secs()), positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+        game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
 
     io::stdin().read_line(&mut input).expect("error: unable to read user input");
     println!("You inputttedddd: {}", input);

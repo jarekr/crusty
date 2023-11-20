@@ -79,7 +79,7 @@ impl Visitor for GameVisitor {
             Ok(HEADER_END_TIME) => self.game.end_time = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_LINK) => self.game.link = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_OPENING) => self.game.opening = Some(value.decode_utf8_lossy().to_string()),
-            Ok(other) => println!("Ignoring other key {}", other),
+            Ok(_) => (),
             Err(why) => println!("Caught error convertying header key to utf8"),
         };
     }
