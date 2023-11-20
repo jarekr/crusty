@@ -89,8 +89,8 @@ fn main() {
         //GamePosition::insert(&db, game_id, position_ids).expect("failed to inser game positions");
 
         if game_count % 1000 == 0 {
-            let duration = start_time.elapsed().as_secs();
-            let games_per_sec = game_count / duration;
+            let duration = start_time.elapsed().as_secs_f64();
+            let games_per_sec = game_count as f64 / duration;
             println!(
                 "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
                 game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
@@ -100,8 +100,8 @@ fn main() {
 
     let mut input = String::new();
     println!("-- stats --");
-    let duration = start_time.elapsed().as_secs();
-    let games_per_sec = game_count / duration;
+    let duration = start_time.elapsed().as_secs_f64();
+    let games_per_sec = game_count as f64 / duration;
     println!(
         "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
         game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
