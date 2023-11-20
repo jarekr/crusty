@@ -44,7 +44,7 @@ impl Visitor for GameVisitor {
     }
 
     fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
-        match (std::str::from_utf8(key)) {
+        match std::str::from_utf8(key) {
             Ok(HEADER_EVENT) => self.game.event = value.decode_utf8_lossy().to_string(),
             Ok(HEADER_SITE) => self.game.site = value.decode_utf8_lossy().to_string(),
             Ok(HEADER_DATE) => self.game.date = Some(value.decode_utf8_lossy().to_string()),

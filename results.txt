@@ -7,3 +7,22 @@ games 11899000
     r56=49825811
     r78=18123114
 
+with positions pre-allocated:
+games 4429000
+  positions parsed 292229157
+    duration 561.52 sec, 7887.45 games/s
+    positions 234877272
+    r12=8053040
+    r34=22630902
+    r56=24088393
+    r78=9469467
+
+after turning writes to db on
+games    800
+  positions parsed 52270
+    duration 331.22 sec, 2.42 games/s
+    positions 0
+    r12=0
+    r34=0
+    r56=0
+    r78=0

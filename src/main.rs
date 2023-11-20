@@ -9,6 +9,7 @@ use db::{Db, Game, GamePosition, Position};
 use std::time::{Duration, Instant};
 
 use std::collections::{HashMap, HashSet};
+use std::collections::btree_map::BTreeMap;
 
 mod parsing;
 use parsing::{BitPosition, GameVisitor};
@@ -38,21 +39,22 @@ fn main() {
     let iter = reader.into_iter(visitor);
 
     let mut game_count: u64 = 1;
-    let mut pos_id: u64 = 1;
+    let mut pos_id: u64 = 0;
     let mut position_ids = Vec::new();
 
     let million = 10usize.pow(6);
-    let mut r12hm: HashMap<u64, u64> = HashMap::with_capacity(25 * million);
-    let mut r34hm: HashMap<u64, u64> = HashMap::with_capacity(60 * million);
-    let mut r56hm: HashMap<u64, u64> = HashMap::with_capacity(60 * million);
-    let mut r78hm: HashMap<u64, u64> = HashMap::with_capacity(25 * million);
+    //let million = 10usize;
+    let mut r12hm: BTreeMap<u64, u64> = BTreeMap::new();
+    let mut r34hm: BTreeMap<u64, u64> = BTreeMap::new();
+    let mut r56hm: BTreeMap<u64, u64> = BTreeMap::new();
+    let mut r78hm: BTreeMap<u64, u64> = BTreeMap::new();
     let mut r12id_latest: u64 = 1;
     let mut r34id_latest: u64 = 1;
     let mut r56id_latest: u64 = 1;
     let mut r78id_latest: u64 = 1;
 
     let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(100 * million);
-    let mut positions2: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(100 * million);
+    //let mut positions2: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(100 * million);
 
     let start_time = Instant::now();
 
@@ -70,26 +72,22 @@ fn main() {
             //};
             position_ids.push(pos_id);
 
-            let r12id = match r12hm.get(&r12) {
-                Some(id) => id,
-                None => { r12hm.insert(r12, r12id_latest); r12id_latest += 1; r12hm.get(&r12).unwrap() },
-            };
-            let r34id = match r34hm.get(&r34) {
-                Some(id) => id,
-                None => { r34hm.insert(r34, r34id_latest); r34id_latest += 1; r34hm.get(&r34).unwrap() },
-            };
-            let r56id = match r56hm.get(&r56) {
-                Some(id) => id,
-                None => { r56hm.insert(r56, r56id_latest); r56id_latest += 1; r56hm.get(&r56).unwrap() },
-            };
-            let r78id = match r78hm.get(&r78) {
-                Some(id) => id,
-                None => { r78hm.insert(r78, r78id_latest); r78id_latest += 1; r78hm.get(&r78).unwrap() },
-            };
+            //let r12id = match r12hm.get(&r12) {
+            //    Some(id) => id,
+            //    None => { r12hm.insert(r12, r12id_latest); r12id_latest += 1; r12hm.get(&r12).unwrap() },
+            //};
+            let r12id: u64 = *r12hm.entry(r12).or_insert(r12id_latest);
+            if r12id == r12id_latest { r12id_latest += 1; }
+            let r34id: u64 = *r34hm.entry(r34).or_insert(r34id_latest);
+            if r34id == r34id_latest { r34id_latest += 1; }
+            let r56id: u64 = *r56hm.entry(r56).or_insert(r56id_latest);
+            if r56id == r56id_latest { r56id_latest += 1; }
+            let r78id: u64 = *r78hm.entry(r78).or_insert(r78id_latest);
+            if r78id == r78id_latest { r78id_latest += 1; }
 
 
             //println!("Inserting position {} {} {} {} ({}, {}, {}, {})", *r12id, *r34id, *r56id, *r78id, r12, r34, r56, r78);
-            positions.insert((*r12id, *r34id, *r56id, *r78id));
+            positions.insert((r12id, r34id, r56id, r78id));
             pos_id += 1;
         }
 
