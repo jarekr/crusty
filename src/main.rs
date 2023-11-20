@@ -6,6 +6,8 @@ use std::path::{Path, PathBuf};
 mod db;
 use db::{Db, Game, GamePosition, Position};
 
+use std::time::{Instant, Duration};
+
 use std::collections::{ HashMap, HashSet};
 
 mod parsing;
@@ -35,7 +37,7 @@ fn main() {
     let visitor = &mut GameVisitor::new();
     let iter = reader.into_iter(visitor);
 
-    let mut game_count: i64 = 0;
+    let mut game_count: u64 = 0;
     let mut pos_id: u64 = 0;
     let mut position_ids = Vec::new();
 
@@ -45,6 +47,8 @@ fn main() {
     let mut r78hm: HashMap<u64, u64> = HashMap::new();
 
     let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::new();
+
+    let start_time = Instant::now();
 
     for foo in iter {
         game_count += 1;
@@ -85,9 +89,10 @@ fn main() {
         //GamePosition::insert(&db, game_id, position_ids).expect("failed to inser game positions");
 
         if game_count % 1000 == 0 {
+            let duration: Duration = start_time.elapsed();
             println!(
-                "games {: >6}\n  positions parsed {}\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
-                game_count, position_ids.len(), positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+                "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
+                game_count, position_ids.len(), duration.as_secs(), (game_count / duration.as_secs()), positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
         }
 
     }
@@ -95,8 +100,8 @@ fn main() {
     let mut input = String::new();
     println!("-- stats --");
     println!(
-        "games {: >6}\n  positions parsed {}\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
-        game_count, position_ids.len(), positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+        "games {: >6}\n  positions parsed {}\n    duration {: >6} sec, {} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
+        game_count, position_ids.len(), duration.as_secs(), (game_count / duration.as_secs()), positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
 
     io::stdin().read_line(&mut input).expect("error: unable to read user input");
     println!("You inputttedddd: {}", input);
