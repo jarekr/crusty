@@ -186,9 +186,7 @@ fn bob() {
 fn print_pos(p: &BitPosition) {
     let mut counter = 1;
     for &sq in p.board.iter() {
-        let piece: char = sq.to_char();
-
-        print!("{}", piece);
+        print!("{}", sq.to_char());
         if counter % 8 == 0 {
             println!();
         }
