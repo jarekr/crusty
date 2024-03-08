@@ -6,6 +6,9 @@ use std::path::{Path, PathBuf};
 mod db;
 use db::{Db, Game, GamePosition, Position};
 
+mod persistance;
+use persistance::{PositionSegment,PositionTrieNode};
+
 use std::time::{Duration, Instant};
 use std::fs::File;
 use std::io::prelude::*;
@@ -191,5 +194,16 @@ fn print_pos(p: &BitPosition) {
             println!();
         }
         counter += 1;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create() {
+        //assert_eq!()
+        assert!(PositionSegment::new());
     }
 }
