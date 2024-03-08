@@ -38,7 +38,7 @@ segments are sorted before being stored. Segments can be merged or split.
 
  // 256 bit
 pub struct PositionTrieAddress {
-    value: [u16; 16]
+    pub value: [u16; 16]
 }
 
 pub struct PositionTrieConfig {
@@ -46,10 +46,10 @@ pub struct PositionTrieConfig {
 }
 
 pub struct PositionTrieNode {
-    value: u16,
-    children: Vec<Arc<PositionTrieNode>>, // size up to 2^16
-    are_children_dirty: bool,
-    is_terminal: bool,
+    pub value: u16,
+    pub children: Vec<Arc<PositionTrieNode>>, // size up to 2^16
+    pub are_children_dirty: bool,
+    pub is_terminal: bool,
 }
 
 impl PositionTrieNode {
@@ -70,7 +70,7 @@ impl PositionTrieNode {
 
 pub struct PositionSegment {
     path: &'static str,
-    roots: [Option<Arc<PositionTrieNode>>; 32]
+    roots: Vec<PositionTrieNode>,
 }
 
 impl PositionSegment {
@@ -98,21 +98,51 @@ impl PositionSegment {
         }
     }
 
-    pub fn insert(&self, key: u16, childNode: PositionTrieNode) -> () {
+    fn insert_helper(&self, usize key, children: &mut Vec<Arc<PositionTrieNode>>) -> () {
+
+    }
+
+    pub fn insert(&self, address: PositionTrieAddress) -> () {
+
+        let wanted_value = address.value[0];
+        let mut found: bool = false;
 
         for root in self.roots {
-            match root {
-                Some(ptn_arc) => {
-                    if ptn_arc.value == key {
+            if root.value == wanted_value {
+                self.insert_helper(, children)
                         // found match, merge our children
-                        ptn_arc.insert(childNode);
-                    }
-                },
-                None => _,
+                        found = true;
+                        let second_wanted_value = address.value[1];
+                        let mut children = &root.children;
+                        for wanted_value in address.value {
+                            for child in children {
+                                if child.value == wanted_value {
+                                    // recurse..
 
+                                }
+                            }
+                        };
+                        let mut second_found: bool = false;
+                        for child in root.children.iter() {
+                            if child.value == second_wanted_value {
+                                second_found = true;
+                                for second_child in child.children.iter() {
+                                    if second_child.value ==
+                                }
+                            };
+                            if !second_found {
+                                let node = PositionTrieNode::new(second_wanted_value, false);
+                                root.children.push(Arc::new(node));
+                            }
+
+                        }
+                        found = true;
+                        ptn_arc.insert(childNode);
             }
         }
-
+        if !found {
+            // make new node, insert into roots
+        };
     }
 
     /*
@@ -123,40 +153,7 @@ impl PositionSegment {
     pub fn new() -> PositionSegment {
         PositionSegment {
             path: "segment.db",
-            roots: [
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            ]
+            roots: Vec::new(),
         }
     }
 }
