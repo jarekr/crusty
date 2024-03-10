@@ -37,34 +37,87 @@ segments are sorted before being stored. Segments can be merged or split.
  */
 
  // 256 bit
+// pub enum PositionTrie
 pub struct PositionTrieAddress {
-    pub value: [u16; 16]
+    pub value: [u16; 16] // 16x 16bit matrix; each row = value of that PositionTrie's value
+                        // The 16 rows form a path to a PositionTrieNode where is_terminal is True
+                        // The combined bit values of the PositionTrie node values on the path up to this point
+                        // is the position itself
+
 }
 
 pub struct PositionTrieConfig {
     children_size: usize,
 }
 
+#[derive(Default, Debug)]
 pub struct PositionTrieNode {
     pub value: u16,
-    pub children: Vec<Arc<PositionTrieNode>>, // size up to 2^16
+    pub children: Vec<PositionTrieNode>, // size up to 2^16
     pub are_children_dirty: bool,
     pub is_terminal: bool,
 }
 
 impl PositionTrieNode {
-    pub fn new(value: u16, is_terminal: bool) -> PositionTrieNode {
+    pub fn new(value: u16, terminal: bool) -> Self {
         PositionTrieNode {
             value: value,
-            children: Vec::new(),
+            children: Vec::<PositionTrieNode>::new(),
             are_children_dirty: false,
-            is_terminal: is_terminal,
+            is_terminal: terminal,
+        }
+    }
+}
+
+pub struct PositionTrie {
+    root: PositionTrieNode,
+}
+
+impl PositionTrie {
+    pub fn new() -> Self {
+        PositionTrie {
+            root: PositionTrieNode::default(),
+        }
+    }
+    /*
+    pub fn new(value: u16, is_terminal: bool) -> Self {
+        PositionTrieNode::default()
+    }
+    */
+
+    pub fn insert(&mut self, pos: &PositionTrieAddress) {
+        let mut current_node: Option<&PositionTrieNode> = Some(self.root).as_ref();
+
+        let level_count = 16;
+
+        for level in 0..(level_count - 1)  {
+            let addy = pos.value[level];
+            let mut maybe_node: Option<&PositionTrieNode> = None;
+            for node in current_node.unwrap().children {
+                if node.value == pos.value[level] {
+                    maybe_node = Some(node).as_ref();
+                    break;
+                }
+
+            }
+            if maybe_node.is_none() {
+                maybe_node = Some(PositionTrieNode::new(pos.value[level], level >= (level_count - 1))).as_ref();
+                current_node.unwrap().children.push(maybe_node);
+            }
+            current_node = maybe_node;
         }
     }
 
-    pub fn insert(&self, child: PositionTrieNode) {
-        self.children.push(Arc::new(child));
+    /*
+    pub fn merge_children(&self, &newchildRen: Vec<PositionTrieNode>) {
+        for child in self.children.as_slice() {
+            if child.value == newchild.value {
+                child.insert(newchild);
+            }
+        }
+        self.children.push(child);
     }
+    */
 }
 
 
@@ -109,6 +162,7 @@ impl PositionSegment {
 
         for root in self.roots {
             if root.value == wanted_value {
+                /*
                 self.insert_helper(, children)
                         // found match, merge our children
                         found = true;
@@ -138,6 +192,7 @@ impl PositionSegment {
                         }
                         found = true;
                         ptn_arc.insert(childNode);
+                */
             }
         }
         if !found {
