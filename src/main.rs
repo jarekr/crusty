@@ -48,6 +48,7 @@ fn main() {
     let mut position_ids = Vec::new();
 
     let million = 10usize.pow(6);
+    let thousand = 10usize.pow(3);
     //let million = 10usize;
     let mut r12hm: BTreeMap<u64, u64> = BTreeMap::new();
     let mut r34hm: BTreeMap<u64, u64> = BTreeMap::new();
@@ -58,7 +59,7 @@ fn main() {
     let mut r56id_latest: u64 = 1;
     let mut r78id_latest: u64 = 1;
 
-    let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(100 * million);
+    let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(10 * thousand);
     //let mut positions2: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(100 * million);
 
     let start_time = Instant::now();
@@ -202,10 +203,32 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_create() {
-        //assert_eq!()
-        let ptrie = PositionTrie::new();
-        let pt_add = PositionTrieAddress::new();
-        assert!(ptrie != None);
+    fn test_create_position_trie_Address() {
+        let pt_add = PositionTrieAddress {
+            value: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        };
+    }
+
+    #[test]
+    fn test_create_trie() {
+
+        let mut ptree = PositionTrie::new();
+        let pt_add = PositionSegment::calculate_position_tree_address(1, 2, 3, 4);
+        let res = ptree.insert(&pt_add);
+        // new position should not have any level matches
+        println!("got back res {}", res);
+        assert!(res == 0);
+
+        // inserting the same position results in hits to all levels (e.g. 15)
+        let res2 = ptree.insert(&pt_add);
+        println!("got back res2 {}", res2);
+        assert!(res2 == 15);
+
+        // changing the position somewhat will result in a level between 0 and 15, exclusive
+        let pt2_add = PositionSegment::calculate_position_tree_address(1, 7, 8, 9);
+        let res3 = ptree.insert(&pt2_add);
+        println!("got back res3 {}", res3);
+        assert!(res3 == 7);
+
     }
 }
