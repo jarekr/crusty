@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Arc};
+use std::{borrow::BorrowMut, path::Path, sync::Arc};
 
 
 
@@ -67,6 +67,27 @@ impl PositionTrieNode {
             is_terminal: terminal,
         }
     }
+
+    pub fn add_child(&mut self, child: PositionTrieNode){
+        self.children.push(child);
+    }
+
+    pub fn get_mut_node(&mut self, index: usize) -> Option<&mut PositionTrieNode> {
+        self.children.get_mut(index)
+    }
+
+    // given a u16 value, find a PositionTrieNode with a matching value and return the node's index as OK(), or
+    // return an ERR with the index that should have been there
+    pub fn get_node_index_by_value(&self, value: u16) -> Result<usize, usize> {
+        let mut index: usize = 0;
+        for node in self.children.iter() {
+            if node.value == value {
+                return Ok(index);
+            }
+            index += 1;
+        }
+        Err(index)
+    }
 }
 
 pub struct PositionTrie {
@@ -85,27 +106,27 @@ impl PositionTrie {
     }
     */
 
-    pub fn insert(&mut self, pos: &PositionTrieAddress) {
-        let mut current_node: Option<&PositionTrieNode> = Some(self.root).as_ref();
+    pub fn insert(&mut self, pos: &PositionTrieAddress) -> i32 {
+        let mut current_node = &mut self.root;
 
         let level_count = 16;
+        let mut seen_levels = 0;
 
         for level in 0..(level_count - 1)  {
-            let addy = pos.value[level];
-            let mut maybe_node: Option<&PositionTrieNode> = None;
-            for node in current_node.unwrap().children {
-                if node.value == pos.value[level] {
-                    maybe_node = Some(node).as_ref();
-                    break;
+            //let mut maybe_node: Option<&mut PositionTrieNode> = None;
+            current_node = match current_node.get_node_index_by_value(pos.value[level]) {
+                Ok(idx) => {
+                    seen_levels += 1;
+                    current_node.get_mut_node(idx).unwrap()
                 }
-
+                Err(idx2) => {
+                    let newnode = PositionTrieNode::new(pos.value[level], level >= (level_count - 1));
+                    current_node.add_child(newnode);
+                    current_node.get_mut_node(idx2).unwrap()
+                }
             }
-            if maybe_node.is_none() {
-                maybe_node = Some(PositionTrieNode::new(pos.value[level], level >= (level_count - 1))).as_ref();
-                current_node.unwrap().children.push(maybe_node);
-            }
-            current_node = maybe_node;
         }
+        seen_levels
     }
 
     /*
@@ -149,55 +170,6 @@ impl PositionSegment {
                 r78 as u16,
             ],
         }
-    }
-
-    fn insert_helper(&self, usize key, children: &mut Vec<Arc<PositionTrieNode>>) -> () {
-
-    }
-
-    pub fn insert(&self, address: PositionTrieAddress) -> () {
-
-        let wanted_value = address.value[0];
-        let mut found: bool = false;
-
-        for root in self.roots {
-            if root.value == wanted_value {
-                /*
-                self.insert_helper(, children)
-                        // found match, merge our children
-                        found = true;
-                        let second_wanted_value = address.value[1];
-                        let mut children = &root.children;
-                        for wanted_value in address.value {
-                            for child in children {
-                                if child.value == wanted_value {
-                                    // recurse..
-
-                                }
-                            }
-                        };
-                        let mut second_found: bool = false;
-                        for child in root.children.iter() {
-                            if child.value == second_wanted_value {
-                                second_found = true;
-                                for second_child in child.children.iter() {
-                                    if second_child.value ==
-                                }
-                            };
-                            if !second_found {
-                                let node = PositionTrieNode::new(second_wanted_value, false);
-                                root.children.push(Arc::new(node));
-                            }
-
-                        }
-                        found = true;
-                        ptn_arc.insert(childNode);
-                */
-            }
-        }
-        if !found {
-            // make new node, insert into roots
-        };
     }
 
     /*

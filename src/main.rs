@@ -7,7 +7,7 @@ mod db;
 use db::{Db, Game, GamePosition, Position};
 
 mod persistance;
-use persistance::{PositionSegment,PositionTrieNode};
+use persistance::{PositionSegment,PositionTrieNode, PositionTrie, PositionTrieAddress};
 
 use std::time::{Duration, Instant};
 use std::fs::File;
@@ -204,6 +204,8 @@ mod tests {
     #[test]
     fn test_create() {
         //assert_eq!()
-        assert!(PositionSegment::new());
+        let ptrie = PositionTrie::new();
+        let pt_add = PositionTrieAddress::new();
+        assert!(ptrie != None);
     }
 }
