@@ -45,7 +45,7 @@ fn main() {
 
     let mut game_count: u64 = 1;
     let mut pos_id: u64 = 0;
-    let mut position_ids = Vec::new();
+    //let mut position_ids = Vec::new();
 
     let million = 10usize.pow(6);
     let thousand = 10usize.pow(3);
@@ -59,10 +59,13 @@ fn main() {
     let mut r56id_latest: u64 = 1;
     let mut r78id_latest: u64 = 1;
 
-    let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(10 * thousand);
+    //let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(10 * thousand);
     //let mut positions2: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(100 * million);
+    let mut positions_parsed = 0;
 
     let start_time = Instant::now();
+
+    let mut ptrie = PositionTrie::new();
 
     for foo in iter {
         let result = foo.expect("failed to parse pgn");
@@ -71,12 +74,14 @@ fn main() {
 
         for gv in result.fens {
             let (r12, r34, r56, r78) = gv.to_bits();
+            positions_parsed += 1;
+            ptrie.insert(&PositionSegment::calculate_position_tree_address(r12, r34, r56, r78));
             //print_pos(&bp);
             //let pos_id = match Position::insert(&db, r12, r34, r56, r78) {
             //    Err(why) => panic!("failed to insert: {}", why),
             //    Ok(id) => id,
             //};
-            position_ids.push(pos_id);
+            //position_ids.push(pos_id);
 
             //let r12id = match r12hm.get(&r12) {
             //    Some(id) => id,
@@ -93,7 +98,7 @@ fn main() {
 
 
             //println!("Inserting position {} {} {} {} ({}, {}, {}, {})", *r12id, *r34id, *r56id, *r78id, r12, r34, r56, r78);
-            positions.insert((r12id, r34id, r56id, r78id));
+            //positions.insert((r12id, r34id, r56id, r78id));
             pos_id += 1;
         }
 
@@ -102,9 +107,13 @@ fn main() {
         if game_count % 1000 == 0 {
             let duration = start_time.elapsed().as_secs_f64();
             let games_per_sec = game_count as f64 / duration;
+
+            // println!(
+            //     "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
+            //     game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
             println!(
                 "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
-                game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+                 game_count, positions_parsed, duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
         }
 
         game_count += 1;

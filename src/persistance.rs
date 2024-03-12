@@ -105,6 +105,42 @@ impl PositionTrie {
         PositionTrieNode::default()
     }
     */
+    pub fn level_stat(&self, level: usize) -> i32 {
+        let mut node_count = 0;
+        let mut cur_level = 0;
+        let mut nodes_until_level = 0;
+        let mut levels_count: [i32; 16] = [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ];
+        let mut nodes = Vec::<PositionTrieNode>::new();
+        nodes.push(self.root);
+
+        while nodes.len() > 0 {
+            let cur_node =  nodes.pop().unwrap();
+            for node in cur_node.children {
+                nodes.push(node);
+                nodes_until_level += 1;
+            }
+            node_count += 1;
+        }
+
+        node_count
+    }
 
     pub fn insert(&mut self, pos: &PositionTrieAddress) -> i32 {
         let mut current_node = &mut self.root;
