@@ -75,7 +75,7 @@ fn main() {
         for gv in result.fens {
             let (r12, r34, r56, r78) = gv.to_bits();
             positions_parsed += 1;
-            ptrie.insert(&PositionSegment::calculate_position_tree_address(r12, r34, r56, r78));
+            let res = ptrie.insert(&PositionSegment::calculate_position_tree_address(r12, r34, r56, r78));
             //print_pos(&bp);
             //let pos_id = match Position::insert(&db, r12, r34, r56, r78) {
             //    Err(why) => panic!("failed to insert: {}", why),
@@ -113,7 +113,7 @@ fn main() {
             //     game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
             println!(
                 "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
-                 game_count, positions_parsed, duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+                 game_count, positions_parsed, duration, games_per_sec, positions_parsed, r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
         }
 
         game_count += 1;
@@ -128,7 +128,7 @@ fn main() {
     let games_per_sec = (game_count - 1) as f64 / duration;
     println!(
         "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
-        game_count - 1, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+        game_count - 1, positions_parsed, duration, games_per_sec, positions_parsed, r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
 
     for bt in [&r12hm, &r34hm, &r56hm, &r78hm] {
         println!("first : {}", bt.first_key_value().unwrap().0);

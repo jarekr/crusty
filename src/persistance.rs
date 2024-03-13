@@ -53,7 +53,7 @@ pub struct PositionTrieConfig {
 #[derive(Default, Debug)]
 pub struct PositionTrieNode {
     pub value: u16,
-    pub children: Vec<PositionTrieNode>, // size up to 2^16
+    pub children: Vec<Arc<PositionTrieNode>>, // size up to 2^16
     pub are_children_dirty: bool,
     pub is_terminal: bool,
 }
@@ -62,17 +62,26 @@ impl PositionTrieNode {
     pub fn new(value: u16, terminal: bool) -> Self {
         PositionTrieNode {
             value: value,
-            children: Vec::<PositionTrieNode>::new(),
+            children: Vec::<Arc<PositionTrieNode>>::new(),
             are_children_dirty: false,
             is_terminal: terminal,
         }
     }
 
-    pub fn add_child(&mut self, child: PositionTrieNode){
+    pub fn add_child(&mut self, child: Arc<PositionTrieNode>) -> &mut PositionTrieNode {
         self.children.push(child);
+        self
     }
 
-    pub fn get_mut_node(&mut self, index: usize) -> Option<&mut PositionTrieNode> {
+    pub fn child_count(&self) -> usize {
+        self.children.len()
+    }
+
+    pub fn get_node(&self, index: usize) -> Option<&Arc<PositionTrieNode>> {
+        self.children.get(index)
+    }
+
+    pub fn get_mut_node(&mut self, index: usize) -> Option<&mut Arc<PositionTrieNode>> {
         self.children.get_mut(index)
     }
 
@@ -91,13 +100,13 @@ impl PositionTrieNode {
 }
 
 pub struct PositionTrie {
-    root: PositionTrieNode,
+    root: Arc<PositionTrieNode>,
 }
 
 impl PositionTrie {
     pub fn new() -> Self {
         PositionTrie {
-            root: PositionTrieNode::default(),
+            root: Arc::new(PositionTrieNode::default()),
         }
     }
     /*
@@ -127,13 +136,13 @@ impl PositionTrie {
             0,
             0,
         ];
-        let mut nodes = Vec::<PositionTrieNode>::new();
-        nodes.push(self.root);
+        let mut nodes = Vec::<Arc<PositionTrieNode>>::new();
+        nodes.push(Arc::clone(&self.root));
 
         while nodes.len() > 0 {
             let cur_node =  nodes.pop().unwrap();
-            for node in cur_node.children {
-                nodes.push(node);
+            for node in cur_node.children.iter() {
+                nodes.push(Arc::clone(node));
                 nodes_until_level += 1;
             }
             node_count += 1;
@@ -143,7 +152,7 @@ impl PositionTrie {
     }
 
     pub fn insert(&mut self, pos: &PositionTrieAddress) -> i32 {
-        let mut current_node = &mut self.root;
+        let mut current_node = &self.root;
 
         let level_count = 16;
         let mut seen_levels = 0;
@@ -153,11 +162,12 @@ impl PositionTrie {
             current_node = match current_node.get_node_index_by_value(pos.value[level]) {
                 Ok(idx) => {
                     seen_levels += 1;
-                    current_node.get_mut_node(idx).unwrap()
+                    //current_node.get_mut_node(idx).unwrap()
+                    current_node.get_node(idx).unwrap()
                 }
                 Err(idx2) => {
                     let newnode = PositionTrieNode::new(pos.value[level], level >= (level_count - 1));
-                    current_node.add_child(newnode);
+                    current_node.add_child(Arc::new(newnode));
                     current_node.get_mut_node(idx2).unwrap()
                 }
             }
