@@ -160,6 +160,29 @@ impl PositionTrie {
         node_count
     } */
 
+    pub fn statt(&self) {
+        let mut current_node = &self.root;
+        let mut current_node_idx: usize = 0;
+        let mut nodes  = Vec::<&PositionTrieNode>::new();
+
+        let level_count = 16;
+
+        nodes .push(current_node);
+
+        for level in 0..(level_count)  {
+            //let mut maybe_node: Option<&mut PositionTrieNode> = None;
+            let mut child_count = 0;
+            let mut new_nodes  = Vec::<&PositionTrieNode>::new();
+            let nodes_len = nodes.len();
+            for node in nodes {
+                child_count += node.child_count();
+                new_nodes.extend(node.children.iter());
+            };
+            println!("Level {}, node_count: {}, child_count: {}", level, nodes_len, child_count);
+            nodes = new_nodes;
+        }
+    }
+
     pub fn insert(&mut self, pos: &PositionTrieAddress) -> i32 {
         let mut current_node = &mut self.root;
         let mut current_node_idx: usize = 0;

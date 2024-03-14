@@ -25,6 +25,37 @@ struct Args {
 }
 
 use pgn_reader::BufferedReader;
+/*
+   Tool to read in a pgn file(s) and process the games within
+   Processing includes:
+
+   - saving games to a database
+     - Allow searching by game attributes such as dates, player names, platform,
+     - store PGN in full text as well as some often-used parsed-out attributes
+     - experimentally, store a list of positions, which is really a list of
+     "pointers to positions" plus some extra meta-data for that position that is
+     game-specific.
+
+    - maintain a large, distributed table which can be indexed into useing "pointers to positions".
+    For each position found within each game, genereate a "pointer to position" for this position and
+         a) save it to the game db
+         b) store the position / pointer relationship somehow in this table
+
+    Given the position is a 256-bit / 32 byte "number", "pointer to position"
+    should be something substancially smaller.
+
+    Candidates are
+        a) i64 - easily maps to SQLite integer column type
+        b) u32 - 1/8th of a position, seams like a reasonable hash size
+
+    DS candidates:
+    a) trie
+    b) multi-level hashmap
+    c) arrays?
+
+    parser front-end:
+    cli which accepts a pgn file or a directory of pgn files to process
+*/
 
 fn main() {
     let args = Args::parse();
@@ -136,6 +167,10 @@ fn main() {
         println!("size:   {}", bt.len());
     }
 
+    println!("--- ptrie ---");
+    ptrie.statt();
+
+    /*
     println!("writing r12 file");
     let mut r12file = File::create("r12.db").expect("failed to create r12db");
     for (count, value) in r12hm.keys().enumerate() {
@@ -173,6 +208,7 @@ fn main() {
     if args.config_path.ends_with("nevergoingtohappen") {
         bob();
     }
+    */
 }
 
 fn bob() {
@@ -238,6 +274,8 @@ mod tests {
         let res3 = ptree.insert(&pt2_add);
         println!("insert pt2_add, res3 {}", res3);
         assert!(res3 == 7);
+
+        ptree.statt();
 
     }
 }
