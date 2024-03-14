@@ -53,46 +53,49 @@ pub struct PositionTrieConfig {
 }
 
 #[derive(Default, Debug)]
-pub struct PositionTrieNode<'a> {
+pub struct PositionTrieNode {
     pub value: u16,
-    pub children: Vec<RwLock<PositionTrieNode<'a>>>, // size up to 2^16
+    pub children: Vec<PositionTrieNode>, // size up to 2^16
     pub are_children_dirty: bool,
     pub is_terminal: bool,
 }
 
-impl<'a> PositionTrieNode<'a> {
+impl PositionTrieNode {
     pub fn new(value: u16, terminal: bool) -> Self {
         PositionTrieNode {
             value: value,
-            children: Vec::<RwLock<PositionTrieNode>>::new(),
+            children: Vec::<PositionTrieNode>::new(),
             are_children_dirty: false,
             is_terminal: terminal,
         }
     }
 
+    /*
     pub fn add_child(&mut self, child: RwLock<PositionTrieNode<'a>>) -> &'a mut PositionTrieNode {
         self.children.push(child);
         self
     }
+    */
 
     pub fn child_count(&self) -> usize {
         self.children.len()
     }
 
-    pub fn get_node(&self, index: usize) -> Option<&'a RwLock<PositionTrieNode>> {
-        self.children.get(index)
+    /*
+    pub fn get_node(&self, index: usize) -> Option<&RwLock<PositionTrieNode>> {
+        self.children.get(index).or
     }
 
-    pub fn get_mut_node(&mut self, index: usize) -> Option<&'a mut RwLock<PositionTrieNode>> {
+    pub fn get_mut_node(&mut self, index: usize) -> Option<&mut RwLock<PositionTrieNode>> {
         self.children.get_mut(index)
     }
+    */
 
     // given a u16 value, find a PositionTrieNode with a matching value and return the node's index as OK(), or
     // return an ERR with the index that should have been there
     pub fn get_node_index_by_value(&self, value: u16) -> Result<usize, usize> {
         let mut index: usize = 0;
-        for mutex in self.children.iter() {
-            let node = mutex.read().unwrap();
+        for node in self.children.iter() {
             if node.value == value {
                 return Ok(index);
             }
@@ -102,14 +105,16 @@ impl<'a> PositionTrieNode<'a> {
     }
 }
 
-pub struct PositionTrie<'a> {
-    root: RwLock<PositionTrieNode<'a>>,
+pub struct PositionTrie {
+    //root: RwLock<PositionTrieNode<'a>>,
+    root: PositionTrieNode,
 }
 
-impl<'a> PositionTrie<'_> {
+impl PositionTrie {
     pub fn new() -> Self {
         PositionTrie {
-            root: RwLock::new(PositionTrieNode::default()),
+            //root: RwLock::new(PositionTrieNode::default()),
+            root: PositionTrieNode::default(),
         }
     }
     /*
@@ -156,27 +161,28 @@ impl<'a> PositionTrie<'_> {
     } */
 
     pub fn insert(&mut self, pos: &PositionTrieAddress) -> i32 {
-        let mut current_node_lock = &self.root;
+        let mut current_node = &mut self.root;
+        let mut current_node_idx: usize = 0;
 
         let level_count = 16;
         let mut seen_levels = 0;
 
         for level in 0..(level_count - 1)  {
             //let mut maybe_node: Option<&mut PositionTrieNode> = None;
-            let mut current_node: RwLockReadGuard<'_, PositionTrieNode<'_>> = current_node_lock.read().unwrap();
-            current_node = match current_node.get_node_index_by_value(pos.value[level]) {
+            current_node_idx = match current_node.get_node_index_by_value(pos.value[level]) {
                 Ok(idx) => {
                     seen_levels += 1;
-                    //current_node.get_mut_node(idx).unwrap()
-                    current_node.get_node(idx).unwrap().read().unwrap()
+                    idx
+                    //current_node.children.get(idx).as_mut().unwrap()
                 }
                 Err(idx2) => {
                     let newnode = PositionTrieNode::new(pos.value[level], level >= (level_count - 1));
-                    let mut mut_cur_node = current_node_lock.write().unwrap();
-                    mut_cur_node.add_child(RwLock::new(newnode));
-                    current_node.get_node(idx2).unwrap().read().unwrap()
+                    current_node.children.push(newnode);
+                    idx2
+                    //current_node.children.get(idx2).as_mut().unwrap()
                 }
             };
+            current_node = current_node.children.get_mut(current_node_idx).unwrap();
         }
         seen_levels
     }
@@ -194,12 +200,12 @@ impl<'a> PositionTrie<'_> {
 }
 
 
-pub struct PositionSegment<'a> {
+pub struct PositionSegment {
     path: &'static str,
-    roots: Vec<PositionTrieNode<'a>>,
+    roots: Vec<PositionTrieNode>,
 }
 
-impl <'a> PositionSegment<'a> {
+impl PositionSegment {
     pub fn calculate_position_tree_address(r12: u64, r34: u64, r56: u64, r78: u64) -> PositionTrieAddress {
         let first_address= ((r12 & 0x1111111100000000) >> 8) as u32;
         PositionTrieAddress {
@@ -229,7 +235,7 @@ impl <'a> PositionSegment<'a> {
         self.roots[key]
     }
     */
-    pub fn new() -> PositionSegment<'a> {
+    pub fn new() -> PositionSegment {
         PositionSegment {
             path: "segment.db",
             roots: Vec::new(),

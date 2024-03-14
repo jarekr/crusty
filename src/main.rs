@@ -225,18 +225,18 @@ mod tests {
         let pt_add = PositionSegment::calculate_position_tree_address(1, 2, 3, 4);
         let res = ptree.insert(&pt_add);
         // new position should not have any level matches
-        println!("got back res {}", res);
+        println!("insert pt_add, res {}", res);
         assert!(res == 0);
 
         // inserting the same position results in hits to all levels (e.g. 15)
         let res2 = ptree.insert(&pt_add);
-        println!("got back res2 {}", res2);
+        println!("insert pt_add, res2 {}", res2);
         assert!(res2 == 15);
 
         // changing the position somewhat will result in a level between 0 and 15, exclusive
         let pt2_add = PositionSegment::calculate_position_tree_address(1, 7, 8, 9);
         let res3 = ptree.insert(&pt2_add);
-        println!("got back res3 {}", res3);
+        println!("insert pt2_add, res3 {}", res3);
         assert!(res3 == 7);
 
     }
