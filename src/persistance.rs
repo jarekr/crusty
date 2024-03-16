@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::Write;
 use std::{borrow::BorrowMut, path::Path, sync::Arc};
 
 use std::sync::{RwLock, RwLockReadGuard};
@@ -45,8 +47,15 @@ pub struct PositionTrieAddress {
                         // The 16 rows form a path to a PositionTrieNode where is_terminal is True
                         // The combined bit values of the PositionTrie node values on the path up to this point
                         // is the position itself
-
 }
+
+/*
+impl PositionTrieAddress {
+    pub fn to_bytes(&self) -> &[u8] {
+        let mut return_bytes = u8kk
+    }
+}
+*/
 
 pub struct PositionTrieConfig {
     children_size: usize,
@@ -106,59 +115,15 @@ impl PositionTrieNode {
 }
 
 pub struct PositionTrie {
-    //root: RwLock<PositionTrieNode<'a>>,
     root: PositionTrieNode,
 }
 
 impl PositionTrie {
     pub fn new() -> Self {
         PositionTrie {
-            //root: RwLock::new(PositionTrieNode::default()),
             root: PositionTrieNode::default(),
         }
     }
-    /*
-    pub fn new(value: u16, is_terminal: bool) -> Self {
-        PositionTrieNode::default()
-    }
-    */
-    /*
-    pub fn level_stat(&self, level: usize) -> i32 {
-        let mut node_count = 0;
-        let mut cur_level = 0;
-        let mut nodes_until_level = 0;
-        let mut levels_count: [i32; 16] = [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-        ];
-        let mut nodes = Vec::<RwLockReadGuard<PositionTrieNode>>::new();
-        nodes.push(self.root.read().unwrap());
-
-        while nodes.len() > 0 {
-            let cur_node =  nodes.pop().unwrap().read().unwrap();
-            for node in cur_node.children {
-                nodes.push(node);
-                nodes_until_level += 1;
-            }
-            node_count += 1;
-        }
-
-        node_count
-    } */
 
     pub fn statt(&self) {
         let mut current_node = &self.root;
@@ -167,7 +132,7 @@ impl PositionTrie {
 
         let level_count = 16;
 
-        nodes .push(current_node);
+        nodes.push(current_node);
 
         for level in 0..(level_count)  {
             //let mut maybe_node: Option<&mut PositionTrieNode> = None;
@@ -182,6 +147,7 @@ impl PositionTrie {
             nodes = new_nodes;
         }
     }
+
 
     pub fn insert(&mut self, pos: &PositionTrieAddress) -> i32 {
         let mut current_node = &mut self.root;
@@ -210,25 +176,43 @@ impl PositionTrie {
         seen_levels
     }
 
-    /*
-    pub fn merge_children(&self, &newchildRen: Vec<PositionTrieNode>) {
-        for child in self.children.as_slice() {
-            if child.value == newchild.value {
-                child.insert(newchild);
-            }
-        }
-        self.children.push(child);
-    }
-    */
 }
 
 
 pub struct PositionSegment {
     path: &'static str,
-    roots: Vec<PositionTrieNode>,
+    roots: Vec<PositionTrieAddress>,
 }
 
 impl PositionSegment {
+    pub fn get_header(&self) -> [u8; 4] {
+        [0xcc, 0xdd, 0x69, 0x42]
+    }
+
+    pub fn write(&self, path: &Path) -> Result<usize, std::io::Error> {
+        let foo = File::open(path);
+
+        let mut fh = match File::create(path) {
+            Ok(f) => f,
+            Err(e) => return Err(e),
+        };
+
+        match fh.write_all(&self.get_header()) {
+            Ok(_) => (),
+            Err(e) => return Err(e),
+        };
+
+        for root in self.roots.iter() {
+            let mut write_value: [u8; 2] = [0, 0];
+            for value in root.value {
+                write_value[0] = value as u8;
+                write_value[1] = (value >> 8) as u8;
+                fh.write_all(&write_value);
+            }
+        }
+        Ok(self.roots.len())
+    }
+
     pub fn calculate_position_tree_address(r12: u64, r34: u64, r56: u64, r78: u64) -> PositionTrieAddress {
         let first_address= ((r12 & 0x1111111100000000) >> 8) as u32;
         PositionTrieAddress {
