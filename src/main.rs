@@ -98,6 +98,8 @@ fn main() {
 
     let mut ptrie = PositionTrie::new();
 
+    let mut segment = PositionSegment::new("segment1.db");
+
     for foo in iter {
         let result = foo.expect("failed to parse pgn");
 
@@ -169,6 +171,7 @@ fn main() {
 
     println!("--- ptrie ---");
     ptrie.statt();
+    println!("writing segment file");
 
     /*
     println!("writing r12 file");

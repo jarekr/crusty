@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::{borrow::BorrowMut, path::Path, sync::Arc};
 
@@ -49,6 +49,29 @@ pub struct PositionTrieAddress {
                         // is the position itself
 }
 
+pub struct Position {
+ pub r12: u64,
+ pub r34: u64,
+ pub r56: u64,
+ pub r78: u64,
+}
+
+impl Position {
+    pub fn position_quad_to_bytes(&self) -> [u8; 32] {
+        let mut result: [u8; 32] = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+        let mut result_ptr = 0;
+        for quad in [self.r12, self.r34, self.r56, self.r78] {
+            for i in 0..3 {
+                result[result_ptr + i] = (quad >> (248-i)) as u8;
+            }
+            result_ptr += 4;
+        }
+        result
+    }
+}
 /*
 impl PositionTrieAddress {
     pub fn to_bytes(&self) -> &[u8] {
@@ -181,36 +204,67 @@ impl PositionTrie {
 
 pub struct PositionSegment {
     path: &'static str,
-    roots: Vec<PositionTrieAddress>,
+    roots: Vec<Position>,
 }
 
 impl PositionSegment {
-    pub fn get_header(&self) -> [u8; 4] {
-        [0xcc, 0xdd, 0x69, 0x42]
+    pub fn new(path: &'static str) -> Self {
+        PositionSegment {
+            path: path,
+            roots: Vec::<Position>::new(),
+        }
+    }
+
+    pub fn get_header(&self) -> [u8; 8] {
+        let fixed_header: [u8; 4] = [0xcc, 0xdd, 0x69, 0x42];
+
+        let mut return_header: [u8; 8] = [0xcc, 0xdd, 0x69, 0x42, 0, 0, 0, 0];
+        let len = self.roots.len() as u32;
+        return_header[4] = (len >> 24) as u8;
+        return_header[5] = (len >> 16) as u8;
+        return_header[6] = (len >> 8) as u8;
+        return_header[7] = len as u8;
+        return_header
     }
 
     pub fn write(&self, path: &Path) -> Result<usize, std::io::Error> {
-        let foo = File::open(path);
-
-        let mut fh = match File::create(path) {
-            Ok(f) => f,
-            Err(e) => return Err(e),
-        };
+        let mut fh = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(path)
+            .expect("Unable to create or open for append position segment file");
 
         match fh.write_all(&self.get_header()) {
             Ok(_) => (),
             Err(e) => return Err(e),
         };
 
-        for root in self.roots.iter() {
-            let mut write_value: [u8; 2] = [0, 0];
-            for value in root.value {
-                write_value[0] = value as u8;
-                write_value[1] = (value >> 8) as u8;
-                fh.write_all(&write_value);
+        for pos in self.roots.iter() {
+            match fh.write_all(&pos.position_quad_to_bytes()) {
+                Ok(_) => (),
+                Err(err) => return Err(err),
             }
+        };
+
+        match fh.sync_all() {
+            Ok(_) => Ok(self.roots.len()),
+            Err(err) => Err(err)
         }
-        Ok(self.roots.len())
+    }
+
+    pub fn position_quad_to_bytes(r12: u64, r34: u64, r56: u64, r78: u64) -> [u8; 32] {
+        let mut result: [u8; 32] = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+        let mut result_ptr = 0;
+        for quad in [r12, r34, r56, r78] {
+            for i in 0..3 {
+                result[result_ptr + i] = (quad >> (248-i)) as u8;
+            }
+            result_ptr += 4;
+        }
+        result
     }
 
     pub fn calculate_position_tree_address(r12: u64, r34: u64, r56: u64, r78: u64) -> PositionTrieAddress {
@@ -236,16 +290,9 @@ impl PositionSegment {
             ],
         }
     }
-
     /*
     pub fn fetch_child(&self, key: usize) -> Option<Arc<PositionTrieNode>> {
         self.roots[key]
     }
     */
-    pub fn new() -> PositionSegment {
-        PositionSegment {
-            path: "segment.db",
-            roots: Vec::new(),
-        }
-    }
 }
