@@ -58,14 +58,17 @@ pub struct Position {
 
 impl Position {
     pub fn position_quad_to_bytes(&self) -> [u8; 32] {
-        let mut result: [u8; 32] = [
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        let mut result: [u8; 32] =
+        [
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
         ];
         let mut result_ptr = 0;
         for quad in [self.r12, self.r34, self.r56, self.r78] {
-            for i in 0..3 {
-                result[result_ptr + i] = (quad >> (248-i)) as u8;
+            for i in 0..7 {
+                result[result_ptr + i] = (quad >> (56-(i*8))) as u8;
             }
             result_ptr += 4;
         }
@@ -215,6 +218,14 @@ impl PositionSegment {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.roots.len()
+    }
+
+    pub fn insert(&mut self, r12: u64, r34: u64, r56: u64, r78: u64) {
+        self.roots.push(Position { r12, r34, r56, r78 });
+    }
+
     pub fn get_header(&self) -> [u8; 8] {
         let fixed_header: [u8; 4] = [0xcc, 0xdd, 0x69, 0x42];
 
@@ -227,11 +238,11 @@ impl PositionSegment {
         return_header
     }
 
-    pub fn write(&self, path: &Path) -> Result<usize, std::io::Error> {
+    pub fn write(&self) -> Result<usize, std::io::Error> {
         let mut fh = OpenOptions::new()
             .append(true)
             .create(true)
-            .open(path)
+            .open(self.path)
             .expect("Unable to create or open for append position segment file");
 
         match fh.write_all(&self.get_header()) {

@@ -103,12 +103,12 @@ fn main() {
     for foo in iter {
         let result = foo.expect("failed to parse pgn");
 
-        //let game_id = Game::insert(&db, &result.game).expect("game insert failed");
+        let game_id = Game::insert(&db, &result.game).expect("game insert failed");
 
         for gv in result.fens {
             let (r12, r34, r56, r78) = gv.to_bits();
             positions_parsed += 1;
-            let res = ptrie.insert(&PositionSegment::calculate_position_tree_address(r12, r34, r56, r78));
+            //let res = ptrie.insert(&PositionSegment::calculate_position_tree_address(r12, r34, r56, r78));
             //print_pos(&bp);
             //let pos_id = match Position::insert(&db, r12, r34, r56, r78) {
             //    Err(why) => panic!("failed to insert: {}", why),
@@ -120,6 +120,7 @@ fn main() {
             //    Some(id) => id,
             //    None => { r12hm.insert(r12, r12id_latest); r12id_latest += 1; r12hm.get(&r12).unwrap() },
             //};
+            /*
             let r12id: u64 = *r12hm.entry(r12).or_insert(r12id_latest);
             if r12id == r12id_latest { r12id_latest += 1; }
             let r34id: u64 = *r34hm.entry(r34).or_insert(r34id_latest);
@@ -128,10 +129,12 @@ fn main() {
             if r56id == r56id_latest { r56id_latest += 1; }
             let r78id: u64 = *r78hm.entry(r78).or_insert(r78id_latest);
             if r78id == r78id_latest { r78id_latest += 1; }
+            */
 
 
             //println!("Inserting position {} {} {} {} ({}, {}, {}, {})", *r12id, *r34id, *r56id, *r78id, r12, r34, r56, r78);
             //positions.insert((r12id, r34id, r56id, r78id));
+            segment.insert(r12, r34, r56, r78);
             pos_id += 1;
         }
 
@@ -145,8 +148,8 @@ fn main() {
             //     "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
             //     game_count, position_ids.len(), duration, games_per_sec, positions.len(), r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
             println!(
-                "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
-                 game_count, positions_parsed, duration, games_per_sec, positions_parsed, r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
+                "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n\n",
+                 game_count, positions_parsed, duration, games_per_sec, positions_parsed);
         }
 
         game_count += 1;
@@ -160,19 +163,14 @@ fn main() {
     let duration = start_time.elapsed().as_secs_f64();
     let games_per_sec = (game_count - 1) as f64 / duration;
     println!(
-        "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}\n    r12={}\n    r34={}\n    r56={}\n    r78={}\n",
-        game_count - 1, positions_parsed, duration, games_per_sec, positions_parsed, r12hm.len(), r34hm.len(), r56hm.len(), r78hm.len());
-
-    for bt in [&r12hm, &r34hm, &r56hm, &r78hm] {
-        println!("first : {}", bt.first_key_value().unwrap().0);
-        println!("last:   {}", bt.last_key_value().unwrap().0);
-        println!("size:   {}", bt.len());
-    }
+        "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}",
+        game_count - 1, positions_parsed, duration, games_per_sec, positions_parsed);
 
     println!("--- ptrie ---");
     ptrie.statt();
+    println!("writing segment file, {} positions", segment.len());
+    segment.write();
     println!("writing segment file");
-
     /*
     println!("writing r12 file");
     let mut r12file = File::create("r12.db").expect("failed to create r12db");
