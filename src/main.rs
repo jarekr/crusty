@@ -69,7 +69,6 @@ struct Args {
 */
 
 fn parse_in_parallel() {
-
     // given a list of directories, generate a list of .pgn files
     //
     // order the .pgn files by size, and given N cores, create N segments and map
