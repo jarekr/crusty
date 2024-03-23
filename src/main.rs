@@ -1,21 +1,30 @@
-use clap::Parser;
-use colored::*;
+// "standard library"
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-mod db;
-use db::{Db, Game, GamePosition, Position};
-
-mod persistance;
-use persistance::{PositionSegment,PositionTrieNode, PositionTrie, PositionTrieAddress};
-
 use std::time::{Duration, Instant};
 use std::fs::File;
 use std::io::prelude::*;
-
 use std::collections::{HashMap, HashSet};
 use std::collections::btree_map::BTreeMap;
 
+// third party modules
+use clap::Parser;
+use colored::*;
+use pgn_reader::BufferedReader;
+
+/*
+Import our modules here
+ */
+// DB module
+mod db;
+use db::{Db, Game, GamePosition, Position};
+
+// Persistance module
+mod persistance;
+use persistance::{PositionSegment,PositionTrieNode, PositionTrie, PositionTrieAddress};
+
+// Parsing module
 mod parsing;
 use parsing::{BitPosition, GameVisitor};
 
@@ -23,8 +32,6 @@ use parsing::{BitPosition, GameVisitor};
 struct Args {
     config_path: PathBuf,
 }
-
-use pgn_reader::BufferedReader;
 /*
    Tool to read in a pgn file(s) and process the games within
    Processing includes:
@@ -56,6 +63,14 @@ use pgn_reader::BufferedReader;
     parser front-end:
     cli which accepts a pgn file or a directory of pgn files to process
 */
+
+// from a given .pgn file, create a 1:n segments containing positions + 1
+// table of games. Games will reference positions by segment# and byte offset
+// (or equivalent)
+
+fn create_segments_for_games(games_reader: BufferedReader<>) -> segments {
+
+}
 
 fn main() {
     let args = Args::parse();
