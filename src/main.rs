@@ -1,11 +1,11 @@
 // "standard library"
 use std::fs;
-use std::io;
+
 use std::path::{Path, PathBuf};
-use std::time::{Duration, Instant};
-use std::fs::File;
+use std::time::{Instant};
+
 use std::io::prelude::*;
-use std::collections::{HashMap, HashSet};
+
 use std::collections::btree_map::BTreeMap;
 
 // third party modules
@@ -18,11 +18,11 @@ Import our modules here
  */
 // DB module
 mod db;
-use db::{Db, Game, GamePosition, Position};
+use db::{Db, Game};
 
 // Persistance module
 mod persistance;
-use persistance::{PositionSegment,PositionTrieNode, PositionTrie, PositionTrieAddress};
+use persistance::{PositionSegment, PositionTrie};
 
 // Parsing module
 mod parsing;
@@ -114,17 +114,17 @@ fn main() {
     let mut pos_id: u64 = 0;
     //let mut position_ids = Vec::new();
 
-    let million = 10usize.pow(6);
-    let thousand = 10usize.pow(3);
+    let _million = 10usize.pow(6);
+    let _thousand = 10usize.pow(3);
     //let million = 10usize;
-    let mut r12hm: BTreeMap<u64, u64> = BTreeMap::new();
-    let mut r34hm: BTreeMap<u64, u64> = BTreeMap::new();
-    let mut r56hm: BTreeMap<u64, u64> = BTreeMap::new();
-    let mut r78hm: BTreeMap<u64, u64> = BTreeMap::new();
-    let mut r12id_latest: u64 = 1;
-    let mut r34id_latest: u64 = 1;
-    let mut r56id_latest: u64 = 1;
-    let mut r78id_latest: u64 = 1;
+    let _r12hm: BTreeMap<u64, u64> = BTreeMap::new();
+    let _r34hm: BTreeMap<u64, u64> = BTreeMap::new();
+    let _r56hm: BTreeMap<u64, u64> = BTreeMap::new();
+    let _r78hm: BTreeMap<u64, u64> = BTreeMap::new();
+    let _r12id_latest: u64 = 1;
+    let _r34id_latest: u64 = 1;
+    let _r56id_latest: u64 = 1;
+    let _r78id_latest: u64 = 1;
 
     //let mut positions: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(10 * thousand);
     //let mut positions2: HashSet<(u64, u64, u64, u64)> = HashSet::with_capacity(100 * million);
@@ -132,7 +132,7 @@ fn main() {
 
     let start_time = Instant::now();
 
-    let mut ptrie = PositionTrie::new();
+    let ptrie = PositionTrie::new();
 
     let mut segment = PositionSegment::new("segment1.db");
 
@@ -142,7 +142,7 @@ fn main() {
         let result = visit.expect("failed to parse pgn");
 
         // TODO this needs to handle updates gracefully
-        let game_id = Game::insert(&db, &result.game).expect("game insert failed");
+        let _game_id = Game::insert(&db, &result.game).expect("game insert failed");
 
         // proces the resulting fens
         // TODO do this in parallel
@@ -206,7 +206,7 @@ fn main() {
         }
     }
 
-    let mut input = String::new();
+    let _input = String::new();
     println!("-- stats --");
     let duration = start_time.elapsed().as_secs_f64();
     let games_per_sec = (game_count - 1) as f64 / duration;

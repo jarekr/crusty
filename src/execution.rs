@@ -11,7 +11,7 @@ use crate::persistance;
 use persistance::PositionSegment;
 
 use crate::parsing;
-use parsing::BitPosition;
+
 
 
 // from a given .pgn file, create a 1:n segments, each segment consisting of
@@ -20,15 +20,15 @@ use parsing::BitPosition;
 // (or equivalent) within segment.
 
 //
-fn create_segments_for_games(games_reader: BufferedReader<File>) -> Vec<PositionSegment> {
-    let mut segments = Vec::<PositionSegment>::new();
+fn create_segments_for_games(_games_reader: BufferedReader<File>) -> Vec<PositionSegment> {
+    let segments = Vec::<PositionSegment>::new();
 
     segments
 }
 
 
-fn create_readers_for_dir(path: &Path) -> Vec<BufferedReader<File>> {
-    let mut readers = Vec::<BufferedReader<File>>::new();
+fn create_readers_for_dir(_path: &Path) -> Vec<BufferedReader<File>> {
+    let readers = Vec::<BufferedReader<File>>::new();
 
     readers
 }

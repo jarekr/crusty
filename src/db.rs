@@ -2,7 +2,7 @@ use const_format::concatcp;
 use rusqlite::{named_params, Connection, Error, OpenFlags};
 use std::path::Path;
 
-use lzma;
+
 
 const GAMES_TABLE: &str = "games";
 const GAMES_DDSQL: &str = concatcp!(

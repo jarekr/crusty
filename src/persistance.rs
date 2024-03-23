@@ -1,8 +1,8 @@
-use std::fs::{File, OpenOptions};
+use std::fs::{OpenOptions};
 use std::io::Write;
-use std::{borrow::BorrowMut, path::Path, sync::Arc};
 
-use std::sync::{RwLock, RwLockReadGuard};
+
+
 
 
 
@@ -152,8 +152,8 @@ impl PositionTrie {
     }
 
     pub fn statt(&self) {
-        let mut current_node = &self.root;
-        let mut current_node_idx: usize = 0;
+        let current_node = &self.root;
+        let _current_node_idx: usize = 0;
         let mut nodes  = Vec::<&PositionTrieNode>::new();
 
         let level_count = 16;
@@ -227,7 +227,7 @@ impl PositionSegment {
     }
 
     pub fn get_header(&self) -> [u8; 8] {
-        let fixed_header: [u8; 4] = [0xcc, 0xdd, 0x69, 0x42];
+        let _fixed_header: [u8; 4] = [0xcc, 0xdd, 0x69, 0x42];
 
         let mut return_header: [u8; 8] = [0x01, 0x02, 0x04, 0x08, 0x16, 0x32, 0x64, 0xff];
         let len = self.roots.len() as u32;
@@ -279,7 +279,7 @@ impl PositionSegment {
     }
 
     pub fn calculate_position_tree_address(r12: u64, r34: u64, r56: u64, r78: u64) -> PositionTrieAddress {
-        let first_address= ((r12 & 0x1111111100000000) >> 8) as u32;
+        let _first_address= ((r12 & 0x1111111100000000) >> 8) as u32;
         PositionTrieAddress {
             value: [
                 ((r12 & 0xffffffff00000000) >> 48) as u16,

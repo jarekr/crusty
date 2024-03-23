@@ -13,10 +13,10 @@ use bilge::prelude::*;
 
 use once_cell::sync::Lazy;
 
-use pgn_reader::{BufferedReader, RawHeader, SanPlus, Skip, Visitor};
+use pgn_reader::{RawHeader, SanPlus, Skip, Visitor};
 
-use shakmaty::bitboard::Bitboard;
-use shakmaty::{CastlingMode, Chess, Piece, Position, Role, Square};
+
+use shakmaty::{Chess, Position, Role};
 
 use crate::db::Game;
 
@@ -80,7 +80,7 @@ impl Visitor for GameVisitor {
             Ok(HEADER_LINK) => self.game.link = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_OPENING) => self.game.opening = Some(value.decode_utf8_lossy().to_string()),
             Ok(_) => (),
-            Err(why) => println!("Caught error convertying header key to utf8"),
+            Err(_why) => println!("Caught error convertying header key to utf8"),
         };
     }
 
@@ -195,7 +195,7 @@ pub struct PieceInPlay {
 
 impl PieceInPlay {
     pub fn to_char(&self) -> char {
-        let mut c = match self.piece() {
+        let c = match self.piece() {
             BitPiece::Pawn => WHITE_PAWN_C,
             BitPiece::Rook => WHITE_ROOK_C,
             BitPiece::Bishop => WHITE_BISHOP_C,
