@@ -1,10 +1,5 @@
-use std::fs::{OpenOptions};
+use std::fs::OpenOptions;
 use std::io::Write;
-
-
-
-
-
 
 /*
 persistence layer
@@ -40,35 +35,32 @@ segments are sorted before being stored. Segments can be merged or split.
 
  */
 
- // 256 bit
+// 256 bit
 // pub enum PositionTrie
 pub struct PositionTrieAddress {
-    pub value: [u16; 16] // 16x 16bit matrix; each row = value of that PositionTrie's value
-                        // The 16 rows form a path to a PositionTrieNode where is_terminal is True
-                        // The combined bit values of the PositionTrie node values on the path up to this point
-                        // is the position itself
+    pub value: [u16; 16], // 16x 16bit matrix; each row = value of that PositionTrie's value
+                          // The 16 rows form a path to a PositionTrieNode where is_terminal is True
+                          // The combined bit values of the PositionTrie node values on the path up to this point
+                          // is the position itself
 }
 
 pub struct Position {
- pub r12: u64,
- pub r34: u64,
- pub r56: u64,
- pub r78: u64,
+    pub r12: u64,
+    pub r34: u64,
+    pub r56: u64,
+    pub r78: u64,
 }
 
 impl Position {
     pub fn position_quad_to_bytes(&self) -> [u8; 32] {
-        let mut result: [u8; 32] =
-        [
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
+        let mut result: [u8; 32] = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
         ];
         let mut result_ptr = 0;
         for quad in [self.r12, self.r34, self.r56, self.r78] {
             for i in 0..7 {
-                result[result_ptr + i] = (quad >> (56-(i*8))) as u8;
+                result[result_ptr + i] = (quad >> (56 - (i * 8))) as u8;
             }
             result_ptr += 4;
         }
@@ -154,26 +146,28 @@ impl PositionTrie {
     pub fn statt(&self) {
         let current_node = &self.root;
         let _current_node_idx: usize = 0;
-        let mut nodes  = Vec::<&PositionTrieNode>::new();
+        let mut nodes = Vec::<&PositionTrieNode>::new();
 
         let level_count = 16;
 
         nodes.push(current_node);
 
-        for level in 0..(level_count)  {
+        for level in 0..(level_count) {
             //let mut maybe_node: Option<&mut PositionTrieNode> = None;
             let mut child_count = 0;
-            let mut new_nodes  = Vec::<&PositionTrieNode>::new();
+            let mut new_nodes = Vec::<&PositionTrieNode>::new();
             let nodes_len = nodes.len();
             for node in nodes {
                 child_count += node.child_count();
                 new_nodes.extend(node.children.iter());
-            };
-            println!("Level {}, node_count: {}, child_count: {}", level, nodes_len, child_count);
+            }
+            println!(
+                "Level {}, node_count: {}, child_count: {}",
+                level, nodes_len, child_count
+            );
             nodes = new_nodes;
         }
     }
-
 
     pub fn insert(&mut self, pos: &PositionTrieAddress) -> i32 {
         let mut current_node = &mut self.root;
@@ -182,7 +176,7 @@ impl PositionTrie {
         let level_count = 16;
         let mut seen_levels = 0;
 
-        for level in 0..(level_count - 1)  {
+        for level in 0..(level_count - 1) {
             //let mut maybe_node: Option<&mut PositionTrieNode> = None;
             current_node_idx = match current_node.get_node_index_by_value(pos.value[level]) {
                 Ok(idx) => {
@@ -191,7 +185,8 @@ impl PositionTrie {
                     //current_node.children.get(idx).as_mut().unwrap()
                 }
                 Err(idx2) => {
-                    let newnode = PositionTrieNode::new(pos.value[level], level >= (level_count - 1));
+                    let newnode =
+                        PositionTrieNode::new(pos.value[level], level >= (level_count - 1));
                     current_node.children.push(newnode);
                     idx2
                     //current_node.children.get(idx2).as_mut().unwrap()
@@ -201,9 +196,7 @@ impl PositionTrie {
         }
         seen_levels
     }
-
 }
-
 
 pub struct PositionSegment {
     path: &'static str,
@@ -255,31 +248,36 @@ impl PositionSegment {
                 Ok(_) => (),
                 Err(err) => return Err(err),
             }
-        };
+        }
 
         match fh.sync_all() {
             Ok(_) => Ok(self.roots.len()),
-            Err(err) => Err(err)
+            Err(err) => Err(err),
         }
     }
 
     pub fn position_quad_to_bytes(r12: u64, r34: u64, r56: u64, r78: u64) -> [u8; 32] {
         let mut result: [u8; 32] = [
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
         ];
         let mut result_ptr = 0;
         for quad in [r12, r34, r56, r78] {
             for i in 0..3 {
-                result[result_ptr + i] = (quad >> (248-i)) as u8;
+                result[result_ptr + i] = (quad >> (248 - i)) as u8;
             }
             result_ptr += 4;
         }
         result
     }
 
-    pub fn calculate_position_tree_address(r12: u64, r34: u64, r56: u64, r78: u64) -> PositionTrieAddress {
-        let _first_address= ((r12 & 0x1111111100000000) >> 8) as u32;
+    pub fn calculate_position_tree_address(
+        r12: u64,
+        r34: u64,
+        r56: u64,
+        r78: u64,
+    ) -> PositionTrieAddress {
+        let _first_address = ((r12 & 0x1111111100000000) >> 8) as u32;
         PositionTrieAddress {
             value: [
                 ((r12 & 0xffffffff00000000) >> 48) as u16,

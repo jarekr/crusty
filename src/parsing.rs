@@ -15,7 +15,6 @@ use once_cell::sync::Lazy;
 
 use pgn_reader::{RawHeader, SanPlus, Skip, Visitor};
 
-
 use shakmaty::{Chess, Position, Role};
 
 use crate::db::Game;

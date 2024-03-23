@@ -2,8 +2,6 @@ use const_format::concatcp;
 use rusqlite::{named_params, Connection, Error, OpenFlags};
 use std::path::Path;
 
-
-
 const GAMES_TABLE: &str = "games";
 const GAMES_DDSQL: &str = concatcp!(
     //TODO consider using BLOB for pgn text?

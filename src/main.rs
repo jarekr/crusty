@@ -2,7 +2,7 @@
 use std::fs;
 
 use std::path::{Path, PathBuf};
-use std::time::{Instant};
+use std::time::Instant;
 
 use std::io::prelude::*;
 
@@ -27,7 +27,6 @@ use persistance::{PositionSegment, PositionTrie};
 // Parsing module
 mod parsing;
 use parsing::{BitPosition, GameVisitor};
-
 
 // Execution module?
 
@@ -174,7 +173,6 @@ fn main() {
             if r78id == r78id_latest { r78id_latest += 1; }
             */
 
-
             //println!("Inserting position {} {} {} {} ({}, {}, {}, {})", *r12id, *r34id, *r56id, *r78id, r12, r34, r56, r78);
             //positions.insert((r12id, r34id, r56id, r78id));
             segment.insert(r12, r34, r56, r78);
@@ -299,13 +297,12 @@ mod tests {
     #[test]
     fn test_create_position_trie_Address() {
         let pt_add = PositionTrieAddress {
-            value: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+            value: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         };
     }
 
     #[test]
     fn test_create_trie() {
-
         let mut ptree = PositionTrie::new();
         let pt_add = PositionSegment::calculate_position_tree_address(1, 2, 3, 4);
         let res = ptree.insert(&pt_add);
@@ -325,6 +322,5 @@ mod tests {
         assert!(res3 == 7);
 
         ptree.statt();
-
     }
 }
