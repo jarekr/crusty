@@ -42,7 +42,7 @@ use pgn_reader::BufferedReader;
          b) store the position / pointer relationship somehow in this table
 
     Given the position is a 256-bit / 32 byte "number", "pointer to position"
-    should be something substancially smaller.
+    should be something substantially smaller.
 
     Candidates are
         a) i64 - easily maps to SQLite integer column type
@@ -72,7 +72,6 @@ fn main() {
     let reader = BufferedReader::new(pgn_file);
 
     let visitor = &mut GameVisitor::new();
-    let iter = reader.into_iter(visitor);
 
     let mut game_count: u64 = 1;
     let mut pos_id: u64 = 0;
@@ -100,14 +99,21 @@ fn main() {
 
     let mut segment = PositionSegment::new("segment1.db");
 
-    for foo in iter {
-        let result = foo.expect("failed to parse pgn");
+    for visit in reader.into_iter(visitor) {
+        // play through each move in the pgn and generate a BitPosition for each position reached
+        // TODO handle bad pgn gracefully
+        let result = visit.expect("failed to parse pgn");
 
+        // TODO this needs to handle updates gracefully
         let game_id = Game::insert(&db, &result.game).expect("game insert failed");
 
+        // proces the resulting fens
+        // TODO do this in parallel
         for gv in result.fens {
             let (r12, r34, r56, r78) = gv.to_bits();
             positions_parsed += 1;
+            //TODO: using trie or some other ds, ensure that segment list is kept in order (before writing it out?)
+            //
             //let res = ptrie.insert(&PositionSegment::calculate_position_tree_address(r12, r34, r56, r78));
             //print_pos(&bp);
             //let pos_id = match Position::insert(&db, r12, r34, r56, r78) {
@@ -138,6 +144,11 @@ fn main() {
             pos_id += 1;
         }
 
+        // inserting positions into (sqlite) db proved extremely slow
+        // plan now is to save small-ish metadata in db and game positions in some distributed blob store.
+        // What we really need is not to store the positions, but to have a way to derive the position from the position reference
+        //  with minimal effort / in minimal time
+        //
         //GamePosition::insert(&db, game_id, position_ids).expect("failed to inser game positions");
 
         if game_count % 1000 == 0 {

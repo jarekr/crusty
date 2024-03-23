@@ -229,7 +229,7 @@ impl PositionSegment {
     pub fn get_header(&self) -> [u8; 8] {
         let fixed_header: [u8; 4] = [0xcc, 0xdd, 0x69, 0x42];
 
-        let mut return_header: [u8; 8] = [0xcc, 0xdd, 0x69, 0x42, 0, 0, 0, 0];
+        let mut return_header: [u8; 8] = [0x01, 0x02, 0x04, 0x08, 0x16, 0x32, 0x64, 0xff];
         let len = self.roots.len() as u32;
         return_header[4] = (len >> 24) as u8;
         return_header[5] = (len >> 16) as u8;
