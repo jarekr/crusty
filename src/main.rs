@@ -28,6 +28,11 @@ use persistance::{PositionSegment,PositionTrieNode, PositionTrie, PositionTrieAd
 mod parsing;
 use parsing::{BitPosition, GameVisitor};
 
+
+// Execution module?
+
+mod execution;
+
 #[derive(Parser)]
 struct Args {
     config_path: PathBuf,
@@ -64,12 +69,29 @@ struct Args {
     cli which accepts a pgn file or a directory of pgn files to process
 */
 
-// from a given .pgn file, create a 1:n segments containing positions + 1
-// table of games. Games will reference positions by segment# and byte offset
-// (or equivalent)
+fn parse_in_parallel() {
 
-fn create_segments_for_games(games_reader: BufferedReader<>) -> segments {
-
+    // given a list of directories, generate a list of .pgn files
+    //
+    // order the .pgn files by size, and given N cores, create N segments and map
+    // roughly equally-sized amounts (bytes per game or something) to each segment.
+    //
+    // create N threads, within each thread run an executor over one of the batches
+    //  of .pgn files generated previosly
+    //
+    // await all executors
+    //
+    // upon executor failure, error; note previous game within file as last-known-good
+    // for that file, mark file as to-be-cleaned
+    // save segment to dirty file mapping in dirties table
+    // move on to next file in list
+    //
+    // write out segments
+    //
+    // check status of segments
+    //
+    // merge segments, remapping segment_id/offsets in affected tables
+    //   and merging those as well
 }
 
 fn main() {
