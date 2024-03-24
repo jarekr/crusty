@@ -12,15 +12,17 @@ use persistance::PositionSegment;
 use crate::parsing;
 use parsing::{BitPosition, GameVisitor};
 
+use crate::db;
+use db::{Db, Game};
+
 // from a given .pgn file, create a 1:n segments, each segment consisting of
 // a list of positions + 1 table of games.
 // Games will reference positions by segment_id and byte offset
 // (or equivalent) within segment.
 
 //
-
-fn create_segments_for_games(games_reader: BufferedReader<File>) -> Vec<PositionSegment> {
-    let mut segments = Vec::<PositionSegment>::new();
+fn games_for_buffs(games_reader: BufferedReader<File>) -> Vec<GameVisitor> {
+    let mut games = Vec::<GameVisitor>::new();
 
     let mut pos_id: u64 = 0;
     let visitor = &mut GameVisitor::new();
@@ -28,15 +30,15 @@ fn create_segments_for_games(games_reader: BufferedReader<File>) -> Vec<Position
         // play through each move in the pgn and generate a BitPosition for each position reached
         // TODO handle bad pgn gracefully
         let result = visit.expect("failed to parse pgn");
-
-        // TODO this needs to handle updates gracefully
-        let _game_id = Game::insert(&db, &result.game).expect("game insert failed");
-
-        segment.insert(r12, r34, r56, r78);
-        pos_id += 1;
+        games.push(result);
     }
+    games
+}
 
-    segments
+fn game_visitor_to_positions(visitor: GameVisitor) {
+    for bitpos in visitor.fens {
+        let (r12,r34,r56, r78) = bitpos.to_bits();
+    }
 }
 
 fn create_readers_for_dir(dir: &Path) -> Result<Vec<BufferedReader<File>>, Box<dyn Error>> {
