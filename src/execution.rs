@@ -1,6 +1,7 @@
 // standard lib
 use std::fs::File;
 use std::path::Path;
+use std::error::Error;
 
 // 3rd party
 use pgn_reader::BufferedReader;

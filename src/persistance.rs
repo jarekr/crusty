@@ -1,5 +1,6 @@
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::cmp::Ordering;
 
 /*
 persistence layer
@@ -44,6 +45,7 @@ pub struct PositionTrieAddress {
                           // is the position itself
 }
 
+#[derive(Eq, ParialEq)]
 pub struct Position {
     pub r12: u64,
     pub r34: u64,
@@ -67,6 +69,26 @@ impl Position {
         result
     }
 }
+
+impl Ord for Position {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let mut result = self.r12.cmp(&other.r12);
+        if result != 0 {
+            return result;
+        }
+        result = self.r34.cmp(&other.r34);
+        if result != 0 {
+            return result;
+        }
+        result = self.r56.cmp(&other.r34);
+        if result != 0 {
+            return result;
+        }
+        self.r78.cmp(&other.r34)
+    }
+}
+
+
 /*
 impl PositionTrieAddress {
     pub fn to_bytes(&self) -> &[u8] {
@@ -200,6 +222,7 @@ impl PositionTrie {
 
 pub struct PositionSegment {
     path: &'static str,
+    sorted: bool,
     roots: Vec<Position>,
 }
 
@@ -207,6 +230,7 @@ impl PositionSegment {
     pub fn new(path: &'static str) -> Self {
         PositionSegment {
             path: path,
+            sorted: false,
             roots: Vec::<Position>::new(),
         }
     }
@@ -215,8 +239,16 @@ impl PositionSegment {
         self.roots.len()
     }
 
+    pub fn sort(&mut self) {
+        if ! self.sorted {
+            self.roots.sort_unstable();
+        }
+        self.sorted = true;
+    }
+
     pub fn insert(&mut self, r12: u64, r34: u64, r56: u64, r78: u64) {
         self.roots.push(Position { r12, r34, r56, r78 });
+        self.sorted = false;
     }
 
     pub fn get_header(&self) -> [u8; 8] {
