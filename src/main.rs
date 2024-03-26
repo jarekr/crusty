@@ -1,5 +1,5 @@
 // "standard library"
-use std::fs;
+use std::fs::File;
 
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -103,8 +103,8 @@ fn main() {
     let db = Db::new(dbpath);
     db.init_schema();
 
-    let pgn_file = fs::File::open(&args.config_path).expect("failed to open file");
-    let reader = BufferedReader::new(pgn_file);
+    let pgn_file = File::open(&args.config_path).expect("failed to open file");
+    let reader: BufferedReader<File> = BufferedReader::new(pgn_file);
 
     let visitor = &mut GameVisitor::new();
 

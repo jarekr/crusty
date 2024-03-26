@@ -1,6 +1,6 @@
-// standard lib
 use std::fs::File;
-use std::path::Path;
+// standard lib
+use std::path::{Path, PathBuf};
 use std::error::Error;
 
 // 3rd party
@@ -43,7 +43,7 @@ fn game_visitor_to_positions(visitor: GameVisitor) {
 }
 
 fn create_readers_for_dir(dir: &Path) -> Result<Vec<BufferedReader<File>>, Box<dyn Error>> {
-    let readers = Vec::<BufferedReader<File>>::new();
+    let mut readers = Vec::<BufferedReader<File>>::new();
 
     /*
     let fh: File = match File::open(dir) {
@@ -63,7 +63,7 @@ fn create_readers_for_dir(dir: &Path) -> Result<Vec<BufferedReader<File>>, Box<d
         })
         .collect::<Vec<_>>();
     for pgn in pgns {
-        let reader = BufferedReader::new(pgn.to_path_buf());
+        let reader = BufferedReader::new(std::fs::File::open(pgn.as_path()).expect("Failed to open pgn file"));
         readers.push(reader);
     }
     Ok(readers)

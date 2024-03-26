@@ -45,7 +45,6 @@ pub struct PositionTrieAddress {
                           // is the position itself
 }
 
-#[derive(Eq, ParialEq)]
 pub struct Position {
     pub r12: u64,
     pub r34: u64,
@@ -72,20 +71,28 @@ impl Position {
 
 impl Ord for Position {
     fn cmp(&self, other: &Self) -> Ordering {
-        let mut result = self.r12.cmp(&other.r12);
-        if result != 0 {
-            return result;
-        }
-        result = self.r34.cmp(&other.r34);
-        if result != 0 {
-            return result;
-        }
-        result = self.r56.cmp(&other.r34);
-        if result != 0 {
-            return result;
-        }
-        self.r78.cmp(&other.r34)
+        self.r12.cmp(&other.r12)
+        .then(self.r34.cmp(&other.r34))
+        .then(self.r56.cmp(&other.r56))
+        .then(self.r78.cmp(&other.r78))
     }
+}
+
+impl PartialOrd<Self> for Position {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+
+}
+
+impl PartialEq for Position {
+    fn eq(&self, other: &Self) -> bool {
+        self.r12 == other.r12 && self.r34 == other.r34 && self.r56 == other.r56 && self.r78 == other.r78
+    }
+}
+
+impl Eq for Position {
+
 }
 
 
