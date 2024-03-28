@@ -91,19 +91,6 @@ impl PartialEq for Position {
     }
 }
 
-impl Eq for Position {
-
-}
-
-
-/*
-impl PositionTrieAddress {
-    pub fn to_bytes(&self) -> &[u8] {
-        let mut return_bytes = u8kk
-    }
-}
-*/
-
 pub struct PositionTrieConfig {
     children_size: usize,
 }
