@@ -1,6 +1,6 @@
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::cmp::Ordering;
+use std::cmp::{Ordering, Eq};
 
 /*
 persistence layer
@@ -76,6 +76,10 @@ impl Ord for Position {
         .then(self.r56.cmp(&other.r56))
         .then(self.r78.cmp(&other.r78))
     }
+}
+
+impl Eq for Position {
+
 }
 
 impl PartialOrd<Self> for Position {

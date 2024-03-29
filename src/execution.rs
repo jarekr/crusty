@@ -22,7 +22,7 @@ use db::{Db, Game};
 // (or equivalent) within segment.
 
 //
-fn games_for_buffs(games_reader: BufferedReader<File>) -> Vec<GameVisitor> {
+pub fn games_for_buffs(games_reader: BufferedReader<File>) -> Vec<GameVisitor> {
     let mut games = Vec::<GameVisitor>::new();
 
     let mut pos_id: u64 = 0;
@@ -36,14 +36,14 @@ fn games_for_buffs(games_reader: BufferedReader<File>) -> Vec<GameVisitor> {
     games
 }
 
-fn game_visitor_to_positions(visitor: GameVisitor) {
+pub fn game_visitor_to_positions(visitor: GameVisitor) {
     for bitpos in visitor.fens {
         let (r12,r34,r56, r78) = bitpos.to_bits();
     }
 }
 
-fn create_readers_for_dir(dir: &Path) -> Result<Vec<BufferedReader<File>>, Box<dyn Error>> {
-    let mut readers = Vec::<BufferedReader<File>>::new();
+pub fn create_readers_for_dir(dir: &Path) -> Result<&mut Vec<BufferedReader<File>>, Box<dyn Error>> {
+    let mut readers = &mut Vec::<BufferedReader<File>>::new();
 
     /*
     let fh: File = match File::open(dir) {

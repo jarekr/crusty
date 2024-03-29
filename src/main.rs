@@ -31,10 +31,11 @@ use parsing::{BitPosition, GameVisitor};
 // Execution module?
 
 mod execution;
+use execution::{create_readers_for_dir, games_for_buffs, game_visitor_to_positions};
 
 #[derive(Parser)]
 struct Args {
-    config_path: PathBuf,
+    pgn_paths: Vec<PathBuf>,
 }
 /*
    Tool to read in a pgn file(s) and process the games within
@@ -94,16 +95,35 @@ fn parse_in_parallel() {
 
 fn main() {
     let args = Args::parse();
-    println!(
-        "called with arg : {}",
-        args.config_path.display().to_string().green()
-    );
+    for path in args.pgn_paths.iter() {
+        println!("called with arg : {}", path.display().to_string().green());
+    };
 
     let dbpath = Path::new("data.db");
     let db = Db::new(dbpath);
     db.init_schema();
 
-    let pgn_file = File::open(&args.config_path).expect("failed to open file");
+    let mut readers = Vec::<BufferedReader<File>>::new();
+
+    for path in args.pgn_paths.iter() {
+        readers.append(create_readers_for_dir(path).unwrap());
+
+    }
+
+}
+
+fn main_old() {
+    let args = Args::parse();
+    for path in args.pgn_paths.iter() {
+        println!("called with arg : {}", &path.display().to_string().green());
+    };
+
+    let dbpath = Path::new("data.db");
+    let db = Db::new(dbpath);
+    db.init_schema();
+
+    let pgn_path = args.pgn_paths.get(0).unwrap();
+    let pgn_file = File::open(pgn_path).expect("failed to open file");
     let reader: BufferedReader<File> = BufferedReader::new(pgn_file);
 
     let visitor = &mut GameVisitor::new();
@@ -251,7 +271,7 @@ fn main() {
         .expect("error: unable to read user input");
     println!("You inputttedddd: {}", input);
 
-    if args.config_path.ends_with("nevergoingtohappen") {
+    if args.pgn_paths.ends_with("nevergoingtohappen") {
         bob();
     }
     */
@@ -259,10 +279,10 @@ fn main() {
 
 fn bob() {
     let args = Args::parse();
-    println!(
-        "called with config_path: {}",
-        args.config_path.display().to_string().green()
-    );
+    for path in args.pgn_paths {
+        println!("called with arg : {}", path.display().to_string().green());
+    };
+
     let dbpath = Path::new("data.db");
     let db = Db::new(dbpath);
     db.init_schema();
