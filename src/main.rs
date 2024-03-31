@@ -22,7 +22,7 @@ use db::{Db, Game};
 
 // Persistance module
 mod persistance;
-use persistance::{PositionSegment, PositionTrie};
+use persistance::{PositionSegment, PositionTrie, PositionTrieAddress};
 
 // Parsing module
 mod parsing;
@@ -99,17 +99,44 @@ fn main() {
         println!("called with arg : {}", path.display().to_string().green());
     };
 
+    let mut game_count: i64 = 0;
+    let mut positions_parsed: i64 = 0;
+    let start_time = Instant::now();
+
     let dbpath = Path::new("data.db");
     let db = Db::new(dbpath);
     db.init_schema();
 
+    let mut segment = PositionSegment::new("segment1.db");
+
     let mut readers = Vec::<BufferedReader<File>>::new();
 
     for path in args.pgn_paths.iter() {
-        readers.append(create_readers_for_dir(path).unwrap());
-
+        readers.append(&mut create_readers_for_dir(path).unwrap());
     }
 
+    for reader in readers {
+        let games = games_for_buffs(reader);
+        for game in games {
+            game_count += 1;
+            for fen in game.fens.iter() {
+                positions_parsed += 1;
+                let (r12,r34,r56, r78) = fen.to_bits();
+                segment.insert(r12, r34, r56, r78);
+            }
+        }
+    };
+
+    let duration = start_time.elapsed().as_secs_f64();
+    let games_per_sec = (game_count - 1) as f64 / duration;
+
+    println!(
+        "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}",
+        game_count - 1, positions_parsed, duration, games_per_sec, positions_parsed);
+
+    println!("writing segment file, {} positions", segment.len());
+    segment.write();
+    println!("finished");
 }
 
 fn main_old() {
