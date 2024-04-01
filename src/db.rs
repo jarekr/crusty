@@ -33,7 +33,7 @@ const GAMES_DDSQL: &str = concatcp!(
         start_time TEXT,
         end_time TEXT,
         link TEXT,
-        hash INTEGER)"
+        hash INTEGER UNIQUE NOT NULL)"
 );
 const GET_BY_ID_GAMES_SQL: &str = concatcp!(
     "SELECT * FROM ",

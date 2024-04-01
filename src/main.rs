@@ -118,7 +118,10 @@ fn main() {
     for reader in readers {
         let game_visitors = games_for_buffs(reader);
         for gv in game_visitors {
-            let _game_id = Game::insert(&db, &gv.game).expect("game insert failed");
+            let insert_result = Game::insert(&db, &gv.game);
+            if insert_result.is_err() {
+                continue;
+            }
             game_count += 1;
             for fen in gv.fens.iter() {
                 positions_parsed += 1;
@@ -129,11 +132,11 @@ fn main() {
     };
 
     let duration = start_time.elapsed().as_secs_f64();
-    let games_per_sec = (game_count - 1) as f64 / duration;
+    let games_per_sec = game_count as f64 / duration;
 
     println!(
         "games {: >6}\n  positions parsed {}\n    duration {: >6.2} sec, {:.2} games/s\n    positions {}",
-        game_count - 1, positions_parsed, duration, games_per_sec, positions_parsed);
+        game_count, positions_parsed, duration, games_per_sec, positions_parsed);
 
     println!("writing segment file, {} positions", segment.len());
     segment.write();
