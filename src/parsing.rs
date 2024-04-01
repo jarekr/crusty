@@ -1,6 +1,6 @@
 use bilge::arbitrary_int::Number;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::PathBuf};
+use std::{borrow::Borrow, collections::HashMap, hash::{DefaultHasher, Hash, Hasher}, path::PathBuf};
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct RustyConfig {
@@ -13,9 +13,9 @@ use bilge::prelude::*;
 
 use once_cell::sync::Lazy;
 
-use pgn_reader::{RawHeader, SanPlus, Skip, Visitor};
+use pgn_reader::{RawHeader, SanPlus, Nag, RawComment, Skip, Visitor};
 
-use shakmaty::{Chess, Position, Role};
+use shakmaty::{san::Suffix, Chess, Position, Role};
 
 use crate::db::Game;
 
@@ -23,6 +23,9 @@ pub struct GameVisitor {
     pub pos: Chess,
     pub fens: Vec<BitPosition>,
     pub game: Game,
+    pub move_count: u8,
+    pub side_to_move: Side,
+    pub pgn_bytes: Vec::<u8>,
 }
 
 impl GameVisitor {
@@ -31,6 +34,9 @@ impl GameVisitor {
             pos: Chess::default(),
             fens: Vec::new(),
             game: Game::new(),
+            move_count: 0,
+            side_to_move: Side::White,
+            pgn_bytes: Vec::new(),
         }
     }
 }
@@ -43,6 +49,19 @@ impl Visitor for GameVisitor {
     }
 
     fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
+        self.pgn_bytes.push(OPEN_SQUARE_BRACKET);
+        for byte in key {
+            self.pgn_bytes.push(*byte);
+        }
+        self.pgn_bytes.push(SPACE);
+        self.pgn_bytes.push(QUOTE);
+        for byte in value.as_bytes() {
+            self.pgn_bytes.push(*byte);
+        }
+        self.pgn_bytes.push(QUOTE);
+        self.pgn_bytes.push(CLOSE_SQUARE_BRACKET);
+        self.pgn_bytes.push(SPACE);
+
         match std::str::from_utf8(key) {
             Ok(HEADER_EVENT) => self.game.event = value.decode_utf8_lossy().to_string(),
             Ok(HEADER_SITE) => self.game.site = value.decode_utf8_lossy().to_string(),
@@ -78,12 +97,56 @@ impl Visitor for GameVisitor {
             Ok(HEADER_END_TIME) => self.game.end_time = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_LINK) => self.game.link = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_OPENING) => self.game.opening = Some(value.decode_utf8_lossy().to_string()),
-            Ok(_) => (),
+            Ok(other) => println!("unknown header key: {}", other),
             Err(_why) => println!("Caught error convertying header key to utf8"),
         };
     }
 
+    fn nag(&mut self, nag: Nag) {
+        for byte in nag.to_string().as_bytes() {
+            self.pgn_bytes.push(*byte);
+        }
+        self.pgn_bytes.push(SPACE);
+    }
+
+    fn comment(&mut self, comment: RawComment<'_>) {
+        self.pgn_bytes.push(OPEN_CURLY_BRACE);
+        for byte in comment.as_bytes() {
+            self.pgn_bytes.push(*byte);
+        }
+        self.pgn_bytes.push(CLOSE_CURLY_BRACE);
+        self.pgn_bytes.push(SPACE);
+    }
+
     fn san(&mut self, san_plus: SanPlus) {
+        let mut postfix: &str;
+        if self.side_to_move == Side::White {
+            self.move_count += 1;
+            postfix = ". ";
+            self.side_to_move = Side::Black;
+        } else {
+            postfix = "... ";
+            self.side_to_move = Side::White;
+        }
+
+        for byte in format!("{}{}", self.move_count, postfix).as_bytes() {
+            self.pgn_bytes.push(*byte);
+        }
+
+        for byte in san_plus.san.to_string().as_bytes() {
+            self.pgn_bytes.push(*byte);
+        }
+
+        if san_plus.suffix.is_some() {
+            if san_plus.suffix.unwrap() == Suffix::Check {
+                self.pgn_bytes.push(PLUS);
+            } else {
+                self.pgn_bytes.push(POUND);
+            }
+        }
+
+        self.pgn_bytes.push(SPACE);
+
         if let Ok(m) = san_plus.san.to_move(&self.pos) {
             self.pos.play_unchecked(&m);
         }
@@ -143,7 +206,16 @@ impl Visitor for GameVisitor {
     }
 
     fn end_game(&mut self) -> Self::Result {
-        ::std::mem::replace(self, GameVisitor::new())
+        match String::from_utf8(std::mem::take(self.pgn_bytes.as_mut())) {
+            Ok(pgnstring) => {
+                let mut hasher = DefaultHasher::new();
+                self.game.pgn = Some(pgnstring);
+                self.game.pgn.hash(&mut hasher);
+                self.game.hash = hasher.finish() as i64;
+            },
+            Err(e) => println!("Error convering pgn_bytes to str: {}", e),
+        };
+        std::mem::replace(self, GameVisitor::new())
     }
 }
 
@@ -398,6 +470,15 @@ pub static BLACK_KING: Lazy<PieceInPlay> =
 pub static BLACK_PAWN: Lazy<PieceInPlay> =
     Lazy::new(|| PieceInPlay::new(BitPiece::Pawn, Side::Black));
 pub static EMPTY: Lazy<PieceInPlay> = Lazy::new(|| PieceInPlay::new(BitPiece::Empty, Side::Black));
+
+pub static OPEN_SQUARE_BRACKET: u8 = 91;
+pub static CLOSE_SQUARE_BRACKET: u8 = 93;
+pub static OPEN_CURLY_BRACE: u8 = 123;
+pub static CLOSE_CURLY_BRACE: u8 = 125;
+pub static SPACE: u8 = 32;
+pub static QUOTE: u8 = 34;
+pub static PLUS: u8 = 43;
+pub static POUND: u8 = 35;
 
 pub static VAL_TO_PIECE: Lazy<HashMap<u8, &Lazy<PieceInPlay>>> = Lazy::new(|| {
     let mut m: HashMap<u8, &Lazy<PieceInPlay>> = HashMap::new();

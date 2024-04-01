@@ -32,7 +32,8 @@ const GAMES_DDSQL: &str = concatcp!(
         variant TEXT,
         start_time TEXT,
         end_time TEXT,
-        link TEXT)"
+        link TEXT,
+        hash INTEGER)"
 );
 const GET_BY_ID_GAMES_SQL: &str = concatcp!(
     "SELECT * FROM ",
@@ -65,7 +66,8 @@ const INSERT_INTO_GAMES_SQL: &str = concatcp!(
        variant,
        start_time,
        end_time,
-       link )
+       link,
+       hash)
     VALUES (
        :pgn,
        :notes,
@@ -90,7 +92,8 @@ const INSERT_INTO_GAMES_SQL: &str = concatcp!(
        :variant,
        :start_time,
        :end_time,
-       :link )"
+       :link,
+       :hash)"
 );
 
 const R12_TABLE: &str = "R12";
@@ -244,6 +247,7 @@ impl Db<'_> {
 
 pub struct Game {
     pub id: i64,
+    pub hash: i64,
     pub pgn: Option<String>,
     pub notes: Option<String>,
     pub event: String,
@@ -274,6 +278,7 @@ impl Game {
     pub fn new() -> Game {
         Game {
             id: 0,
+            hash: 0,
             pgn: None,
             notes: None,
             event: "".to_string(),
@@ -300,17 +305,18 @@ impl Game {
             link: None,
         }
     }
+
     pub fn insert(db: &Db, game: &Game) -> Result<i64, Error> {
-        //let mut comped = lzma::compress(pgn.as_bytes());
         let conn = db.connect();
         let mut stmt = conn.prepare(INSERT_INTO_GAMES_SQL).expect("prepare failed");
-        stmt.insert(named_params! { ":pgn": game.pgn, ":notes": game.notes, ":event": game.event, ":site": game.site,
+        stmt.insert(named_params! { ":pgn": game.pgn, ":hash": game.hash, ":notes": game.notes, ":event": game.event, ":site": game.site,
         ":date": game.date, ":round": game.round, ":white": game.white, ":black": game.black, ":result": game.result,
         ":current_position": game.current_position, ":timezone": game.timezone, ":eco": game.eco, ":eco_url": game.eco_url,
         ":opening": game.opening, ":utc_date": game.utc_date, ":utc_time": game.utc_time, ":white_elo": game.white_elo,
         ":black_elo": game.black_elo, ":time_control": game.time_control, ":termination": game.termination,
         ":variant": game.variant, ":start_time": game.start_time, ":end_time": game.end_time, ":link":  game.link})
     }
+
     pub fn query_by_id(db: &Db, id: u32) -> Option<Game> {
         let conn = db.connect();
         let mut stmt = conn.prepare(GET_BY_ID_GAMES_SQL).expect("prepare failed");
@@ -343,6 +349,7 @@ impl Game {
                 start_time: row.get(23).unwrap(),
                 end_time: row.get(24).unwrap(),
                 link: row.get(25).unwrap(),
+                hash: row.get(26).unwrap(),
             }),
             None => None,
         }

@@ -116,10 +116,11 @@ fn main() {
     }
 
     for reader in readers {
-        let games = games_for_buffs(reader);
-        for game in games {
+        let game_visitors = games_for_buffs(reader);
+        for gv in game_visitors {
+            let _game_id = Game::insert(&db, &gv.game).expect("game insert failed");
             game_count += 1;
-            for fen in game.fens.iter() {
+            for fen in gv.fens.iter() {
                 positions_parsed += 1;
                 let (r12,r34,r56, r78) = fen.to_bits();
                 segment.insert(r12, r34, r56, r78);
