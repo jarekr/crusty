@@ -18,6 +18,8 @@ pgn-reader = "0.25.0"
 shakmaty = "0.26.0"
 lzma = "0.2.2"
 datasize = "0.2.15"
+threadpool = "1.8.1"
+num_cpus = "1.16.0"
 
 [profile.release]
 strip = true

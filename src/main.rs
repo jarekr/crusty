@@ -32,6 +32,7 @@ use parsing::{BitPosition, GameVisitor};
 
 mod execution;
 use execution::{create_readers_for_dir, games_for_buffs, game_visitor_to_positions};
+use threadpool::ThreadPool;
 
 #[derive(Parser)]
 struct Args {
@@ -114,6 +115,8 @@ fn main() {
     for path in args.pgn_paths.iter() {
         readers.append(&mut create_readers_for_dir(path).unwrap());
     }
+
+    let pool = ThreadPool::new(num_cpus::get());
 
     for reader in readers {
         let game_visitors = games_for_buffs(reader);
