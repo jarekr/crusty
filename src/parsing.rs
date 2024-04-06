@@ -97,6 +97,14 @@ impl Visitor for GameVisitor {
             Ok(HEADER_END_TIME) => self.game.end_time = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_LINK) => self.game.link = Some(value.decode_utf8_lossy().to_string()),
             Ok(HEADER_OPENING) => self.game.opening = Some(value.decode_utf8_lossy().to_string()),
+            Ok(HEADER_WHITE_RATING_DIFF)=> (),
+            Ok(HEADER_BLACK_RATING_DIFF)=> (),
+            Ok(HEADER_ANNOTATOR) => (),
+            Ok(HEADER_BLACK_TITLE) => (),
+            Ok(HEADER_WHITE_TITLE) => (),
+            Ok(HEADER_FEN) => (),
+            Ok(HEADER_SETUP) => (),
+            Ok(HEADER_CHAPTER_MODE) => (),
             Ok(other) => println!("unknown header key: {}", other),
             Err(_why) => println!("Caught error convertying header key to utf8"),
         };
@@ -444,6 +452,15 @@ pub const HEADER_START_TIME: &str = "StartTime";
 pub const HEADER_END_TIME: &str = "EndTime";
 pub const HEADER_LINK: &str = "Link";
 pub const HEADER_OPENING: &str = "Opening";
+// headers unique to lichess.org
+pub const HEADER_WHITE_RATING_DIFF: &str = "WhiteRatingDiff";
+pub const HEADER_BLACK_RATING_DIFF: &str = "BlackRatingDiff";
+pub const HEADER_ANNOTATOR: &str = "Annotator";
+pub const HEADER_WHITE_TITLE: &str = "WhiteTitle";
+pub const HEADER_BLACK_TITLE: &str = "BlackTitle";
+pub const HEADER_FEN: &str = "FEN";
+pub const HEADER_SETUP: &str = "SetUp";
+pub const HEADER_CHAPTER_MODE: &str = "ChapterMode";
 
 pub static WHITE_ROOK: Lazy<PieceInPlay> =
     Lazy::new(|| PieceInPlay::new(BitPiece::Rook, Side::White));

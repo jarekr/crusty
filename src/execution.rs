@@ -20,7 +20,6 @@ use db::{Db, Game};
 // a list of positions + 1 table of games.
 // Games will reference positions by segment_id and byte offset
 // (or equivalent) within segment.
-
 //
 pub fn games_for_buffs(games_reader: BufferedReader<File>) -> Vec<GameVisitor> {
     let mut games = Vec::<GameVisitor>::new();

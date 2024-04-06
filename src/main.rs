@@ -102,6 +102,7 @@ fn main() {
 
     let mut game_count: i64 = 0;
     let mut positions_parsed: i64 = 0;
+    let mut duplicate_games: i64 = 0;
     let start_time = Instant::now();
 
     let dbpath = Path::new("data.db");
@@ -116,15 +117,21 @@ fn main() {
         readers.append(&mut create_readers_for_dir(path).unwrap());
     }
 
-    let pool = ThreadPool::new(num_cpus::get());
+    //let pool = ThreadPool::new(num_cpus::get());
 
     for reader in readers {
         let game_visitors = games_for_buffs(reader);
+        //let foo: Vec<&Game> = game_visitors.iter().map(|gv| &gv.game).collect();
+        match Game::bulk_insert(&db, game_visitors.iter().map(|gv| &gv.game).collect()) {
+            Ok(_) => (),
+            Err(e) => println!("bulk_insert: {}", e),
+        };
         for gv in game_visitors {
+            /*
             let insert_result = Game::insert(&db, &gv.game);
             if insert_result.is_err() {
                 continue;
-            }
+            } */
             game_count += 1;
             for fen in gv.fens.iter() {
                 positions_parsed += 1;

@@ -317,6 +317,25 @@ impl Game {
         ":variant": game.variant, ":start_time": game.start_time, ":end_time": game.end_time, ":link":  game.link})
     }
 
+    pub fn bulk_insert(db: &Db, games: Vec<&Game>) -> Result<(), Error> {
+        let mut conn = db.connect();
+        let trans = conn.transaction()?;
+        let mut stmt = trans.prepare(INSERT_INTO_GAMES_SQL)?;
+        for game in games {
+            match stmt.insert(named_params! { ":pgn": game.pgn, ":hash": game.hash, ":notes": game.notes, ":event": game.event, ":site": game.site,
+            ":date": game.date, ":round": game.round, ":white": game.white, ":black": game.black, ":result": game.result,
+            ":current_position": game.current_position, ":timezone": game.timezone, ":eco": game.eco, ":eco_url": game.eco_url,
+            ":opening": game.opening, ":utc_date": game.utc_date, ":utc_time": game.utc_time, ":white_elo": game.white_elo,
+            ":black_elo": game.black_elo, ":time_control": game.time_control, ":termination": game.termination,
+            ":variant": game.variant, ":start_time": game.start_time, ":end_time": game.end_time, ":link":  game.link}) {
+                Ok(_) => (),
+                Err(err) => (),
+            }
+        }
+        drop(stmt);
+        trans.commit()
+    }
+
     pub fn query_by_id(db: &Db, id: u32) -> Option<Game> {
         let conn = db.connect();
         let mut stmt = conn.prepare(GET_BY_ID_GAMES_SQL).expect("prepare failed");
